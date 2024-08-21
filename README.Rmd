@@ -13,12 +13,13 @@ knitr::opts_chunk$set(
 )
 ```
 
-# rRsurveillance
+# Time is of the essence: effectiveness of dairy farm control strategies for H5N1 are limited by fast spread
 
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of rRsurveillance is to ...
+This repository hosts the code, data and supporting analysis for "Time is of the essence: effectiveness of dairy farm control strategies for H5N1 are limited by fast spread."
+The analysis was structured in the form of an R package to facilitate reproducibility.
 
 ## Installation
 
@@ -26,28 +27,10 @@ You can install the development version of rRsurveillance from [GitHub](https://
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("wf-id/rRsurveillance-h5n1")
+remotes::install_github("wf-id/h5n1speed")
 ```
 
-## Example
+## Running the analysis
 
-This is a basic example which shows you how to solve a common problem:
 
-```{r example}
-library(rRsurveillance)
-## basic example code
-
-```
-
-```{r}
- run_det_ode(sim.length = 40) |>
-   format_det_ode_output() |>
-   plot()
-```
-
-```{r}
-set.seed(42)
-z <- run_odin_vaccines(intervention_time = Inf)
-with(subset(z, compartment == "S_inc"),
-    plot(time, value, type = "b", pch = 19))
-```
+## Examining the figures

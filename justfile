@@ -15,9 +15,6 @@ simulate:
 
 brief:
     quarto render manuscript/delay_strategy.qmd --to pdf
-
-movepkg:
-    scp ../rRsurveillance_0.0.2.tar.gz pegasus:/deac/bio/kortessisGrp/dewime23/rRsurveillance_0.0.2.tar.gz 
-
+    
 fetch:
     scp pegasus:/deac/bio/kortessisGrp/dewime23/rRSurveillance/manuscript/*.rds dev/
