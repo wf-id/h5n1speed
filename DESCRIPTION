@@ -1,0 +1,28 @@
+Package: h5n1speed
+Title: Understanding the role of speed on containing outbreaks on dairy farms.
+Version: 0.0.2
+Authors@R: 
+    person("Michael", "DeWitt", , "medewitt@wakehealth.edu", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0001-8940-1967"))
+Description: What the package does (one paragraph).
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Imports: 
+    data.table,
+    deSolve,
+    dplyr,
+    ggplot2,
+    ggsci,
+    odin,
+    stringr,
+    tibble
+Depends: 
+    R (>= 4.1.0)
+LazyData: true
+Suggests: 
+    knitr,
+    quarto,
+    rmarkdown
+VignetteBuilder: knitr

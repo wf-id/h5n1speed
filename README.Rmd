@@ -1,17 +1,28 @@
+---
+output: github_document
+---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
 
 # rRsurveillance
 
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of rRsurveillance is to …
+The goal of rRsurveillance is to ...
 
 ## Installation
 
-You can install the development version of rRsurveillance from
-[GitHub](https://github.com/) with:
+You can install the development version of rRsurveillance from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("remotes")
@@ -22,24 +33,21 @@ remotes::install_github("wf-id/rRsurveillance-h5n1")
 
 This is a basic example which shows you how to solve a common problem:
 
-``` r
+```{r example}
 library(rRsurveillance)
 ## basic example code
+
 ```
 
-``` r
+```{r}
  run_det_ode(sim.length = 40) |>
    format_det_ode_output() |>
    plot()
 ```
 
-<img src="man/figures/README-unnamed-chunk-2-1.png" width="100%" />
-
-``` r
+```{r}
 set.seed(42)
 z <- run_odin_vaccines(intervention_time = Inf)
 with(subset(z, compartment == "S_inc"),
     plot(time, value, type = "b", pch = 19))
 ```
-
-<img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />

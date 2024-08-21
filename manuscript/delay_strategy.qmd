@@ -1,0 +1,668 @@
+---
+title: "Feasible of different control strategies on farms during H5N1 outbreaks"
+author: 
+  - name: "Michael E. DeWitt"
+  - name: "Nicholas Kortessis"
+format: 
+  pdf:
+    fig-height: 6
+    fig-width: 7
+bibliography: speedStrengthSurveillance.bib
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+par(mar = c(4.1, 5.1, 0.5, 0.5), las = 1)
+```
+
+
+```{r setup, include = FALSE}
+library(dplyr)
+library(tibble)
+library(tidyr)
+library(purrr)
+library(ggplot2)
+library(furrr)
+library(ggsci)
+library(patchwork)
+library(rRsurveillance)
+plan(multisession)
+```
+
+```{r include=FALSE}
+#| label: themeSetup
+my_x_lab <- "Proportion of possible infections avoided"
+
+common_theme <-function() list(
+    coord_cartesian(expand = FALSE),
+        theme_classic(),
+        theme(panel.grid.major.x = element_line(color = "grey80")),
+        theme(panel.grid.major.y = element_line(color = "grey80")),
+    scale_color_nejm(),
+    scale_y_continuous(limits = c(0,1),
+    breaks = c(0, .2, .4, .6, .8, 1)),
+    theme(legend.position.inside = c(.85,.6)),
+    theme(axis.text = element_text(size = rel(1.1)), axis.title = element_text(size = rel(1.1))),
+    theme(legend.title = element_text(size = rel(.8)),
+    legend.text = element_text(size  = rel(.8))),
+    guides(color=guide_legend(position = "inside")),
+    scale_x_continuous(limits = c(0,11),
+                     breaks = c(2,4,6,8,10)),
+    labs(y = my_x_lab),
+    theme(axis.title.y = element_text(size = rel(.8)))
+)
+
+```
+
+
+# Introduction
+
+There have been an increasing number of outbreaks of highly pathogenic avian influenza(HPAI) A(H5N1) across the United States among various mammalian species.
+With the first documented case in dairy cattle occured on March 25, 2024 in Texas and phylogenetic evidence suggesting its initial spillover in November 2023, as DATE HPAI H5N1 has been documented in herds across ### herds in 13?? states.
+There are still open questions regarding approaches to potentially controlling outbreaks.
+
+A common approach of examining the strength of a pathogen is through the basic reproduction number, $R_0$.
+However, Duschoff et al have proposed that the speed of an epidemic, or the instrinc growth rate, $r$ may provide deeper insight into our response to pathogens[@dushoffSpeedStrengthEpidemic2021], especially in the context of outbreaks of novel pathogens.
+While $R_0$ provides insight into longer term interventions such as informing vaccination targets, it fails to capture it fails to capture an important limiting resource during an emerging outbreak: time. 
+Any intervention that blocks or slows transmission will be more effective when applied as early as possible. 
+But $R_0$ does not capture this value. 
+A related value, r0, measures the speed of the epidemic, and can gauge how much time any intervention has before it becomes ineffective in stymieing an outbreak.
+Furthermore, conditional on detection of an outbreak, our responses are often delayed by the time it takes for implementation which itself has implications on our surveillance approach to prevent large outbreaks on farms.
+
+In this analysis we explore the role that different surveillance approaches and interventions have on limiting infections on dairy farms.
+Through this approach we can elucidate which approaches could be more effective under these regimes.
+This analysis could be used to design surveillance and intervention approaches in order to limit the impact of outbreaks on dairy farms.
+
+# Results
+
+Compared with other notable pathogens, H5N1 has higher rates of speed (@fig-speedComparison, panel A).
+During outbreaks, especially amongst novel pathogens when vaccination and therapies are unavailable, removal of infected and infectious individuals is common.
+However, deploying these strategies requires surveilance infrastructure to recognize an outbreak and then delay the intervention subject to some delay (@fig-speedComparison, panel B).
+
+We employed three different scenarios for intervention strategies on a simulated 500 cow dairy farm with a single infected cow.
+These strategies includes examination of the drop in total milk production, an easily measured variable on dairy farms; a threshold for the number of infected cows; and a threshold for the number of symptomatic cows detected, denoted by the B compartment in a series of ordinary differential equations (see \ref{eq:ode}).
+
+Surveillance strategies focused on milk production performed the worst and were not sensitive enough to detect outbreaks quickly (@fig-simresults, panel A).
+In scenarios based on the identification of infected cattle or symptomatic cattles, intervention must be employed within 5 days in order to reduce the final fraction infected by 50% in the most sensitive testing thresholds of single cows being identified.
+
+
+```{r echo=FALSE}
+#| label: fig-speedComparison
+#| fig-cap: "A plot of the infectious duration (x-axis) and the infectiousness (y-axis). Values along the solid black line represent the equivalent values for R0 while the dashed lines represent different values of the instrinc growth rate. Thus pathogens may have the same value of R0, but have different speeds upon introduction (higher along the y-axis). Estimates are shown for H1N1 in 2009[@nishiuraProsConsEstimating2010] and for SARS-CoV-2 from @musaEstimationExponentialGrowth2020 (A). A schematic of the modeling approach for an intervention which increases the removal rate of infected individuals subject to some temporal delay after identification (B)."
+
+R2r <- function(R0, infectiousness) { 
+  R0 * (1 / infectiousness) - 1 / infectiousness
+}
+
+dat_pathogen <- tribble(
+  ~"Pathogen",~"R0", ~"Interval", ~"Source",
+  "H5N1 low\n(R0 = 1.2)", 1.2, 1.15, "Bellotti et al (2024)",
+  "H5N1 high\n(R0 = 1.5)", 1.5, 1.15, "Bellotti et al (2024)",
+  "H1N1", 2.3, 3.5,"Nishiura et al 2010",
+  "SARS-CoV-2", 2.5, 3.5, "REF",
+  "SARS", 2.3, 8.4, "REF",
+  "Ebola", 1.5, 5.61,"lthaus (2014)",
+  "RSV", 3, 7, "Reis and Shaman (2016)",
+  "Measles", 14, 11.7, "Vink et al (2014)",
+  "Varicella", 4.3, 14,"Vink et al (2014)",
+  "Smallpox", 4.5, 17.7,"Vink et al (2014)",
+  "Mumps", 11, 18,"Vink et al (2014)",
+  "MERS", .63, 5.5, "REF",
+  "Marburg", 1.59, 9, "REF",
+  "Nipah", 0.33, 13,"Cortes et al (2018)",
+  #"Mpox Clade IIb", 2.43,8.7,"Ponce et al (2024)",
+  "Mpox Clade IIa", 0.85,14.2,"Ponce et al (2024)",
+  "FMD", 2.5, 11, "Keeling and Rohani (2008)", #interval = E period + I period, SEIR
+  #"African Swine Fever", 3.56, 11.19, "Tiwari (2024)",  #interval = I period, SIR
+  "PRRS", 2.6, 14.5, "Charpin (2012)",
+  "Classical Swine Fever", 13.7, 6, "Laevens (1999)",
+  # "Tuberculosis (Human)", ,,,
+  # "Bovine Tuberculosis", , ,,
+  #"Streptococcus equi equi", 2.2, 13, "Houben (2022)",
+  # "HIV", , ,,
+  # "Mycobacteria avian paratuberculosis", , ,,
+  "Rabies (canine)", 1.2, 24.9, "Hampson (2009)"
+  # "Chronic Wasting Disease", , , ,
+  # "Bovine Spongiform Encephalopathy", , ,,
+  # "Scrapies", , ,,
+
+)
+
+r0_se <- function(r, z, N){
+  se <- sqrt((1 + (1-z)* r^2)/ (N * z * (1-z)))
+  sprintf("%s (%s to %s)", round(r,2), round(r - 2 * se, 2), round(r + 2* se,2))
+}
+r0_se(1.18, .4, 500)
+r0_se(-log(1-.8)/.8, .8, 500)
+
+r0_se(-log(1-.3)/.3, .3, 1000)
+r0_se(-log(1-.3)/.3, .3, 500)
+
+r0_se(-log(1-.6)/.6, .3, 1000)
+
+dat_pathogen$r <- pmap_dbl(dat_pathogen, function(R0, Interval, ...) R2r(R0, Interval))
+
+dat_pathogen |>
+select(Pathogen, R0, Interval, r, Source) |>
+mutate(r = round(r, 2)) |>
+knitr::kable(format = "latex")
+
+p_all <- dat_pathogen |>
+ggplot(aes(R0, r))+
+geom_point()+
+ggrepel::geom_text_repel(aes(label = Pathogen))+
+theme_classic()+
+geom_hline(yintercept = 0, lty = 2)+
+geom_vline(xintercept = 1, lty = 2)+
+scale_x_continuous(transform = "log2", 
+breaks = c(1,2,3,4,5,6,7,8,9,10,15), 
+name = expression(R[0]~"(log 2 scale)"), 
+limits = c(1, NA), expand = c(0,.1))+
+scale_y_continuous(limits = c(0,1.4), expand = c(0,0))
+
+
+
+cowplot::ggsave2("pathogen-r-R.pdf", p_all, height = 8.5, width =11 )
+
+
+
+h5_r0 <- 1.2
+h5_infectious <- 1.15
+(r0 <- h5_r0 * (1 / h5_infectious) - 1 / h5_infectious)
+(r1 <- 2.5 * (1 / 1.8) - 1 / 1.8)
+fever_duration_range <- seq(.5, 8, .1)
+infectiousness <- h5_r0 * (1 / fever_duration_range)
+r_sars2 <- 2.5 * (1/4) - 1/4
+r_sars1 <- 2.5 * (1/8.4) - 1/8.4
+2.3 * (1 / 3.5) - 1/3.5
+p_data <- data.frame(fever_duration_range, infectiousness) |>
+  mutate(infx_r0 = 1 / fever_duration_range + r0) |>
+  mutate(infx_r1 = 1 / fever_duration_range + r1)
+
+fig_speed <- ggplot() +
+  geom_line(data = p_data, aes(fever_duration_range, infectiousness)) +
+  geom_line(data = p_data, aes(fever_duration_range, infx_r0),
+            lty = "dashed") +
+  geom_line(data = p_data, aes(fever_duration_range, infx_r1),
+            lty = "dashed") +
+  geom_label(label = "H5N1", aes(x = h5_infectious, y = h5_r0 * (1 / h5_infectious))) +
+  geom_label(label = "SARS-CoV-2\n(2020)", aes(x = 6.8, y = 2.5 * (1 / 6.8))) +
+    geom_label(label = "H1N1\n(2009)", aes(x = 3.5, y = 2.3 * (1 / 3.5))) +
+  theme_bw() +
+  scale_y_continuous(name = expression("Infectiousness (" ~ beta ~ ")"),
+                     limits = c(0, NA)) +
+  scale_x_continuous(name =
+                       expression("Infectious duration, " ~ 1 / gamma ~ " (days)"))
+
+dat <- data.frame(time = seq(1,100,1),
+                   gamma = c(rep(1,30), rep(1.2, 70)))
+
+fig_delay <- dat |>
+ggplot(aes(time, gamma))+
+geom_line()+
+scale_y_continuous(limits = c(.8,1.5), expand = c(0,0))+
+theme_void()+
+theme(axis.title = element_text(color = "black"))+
+labs(x = "Time", y = expression(gamma))+
+geom_vline(xintercept = 20, lty = 2)+
+annotate(x = 8, y = 1.35, geom = "text", label = "Identification\nof\noutbreak")+
+geom_vline(xintercept = 30, lty = 2)+
+annotate(x = 46, y = 1.35, geom = "text", label = "Implementation\nof\nintervention")+
+annotate(geom = "text", x = 25, y = .9, 
+label = "Delay")
+
+use_fig <- p_all / fig_delay + plot_annotation(tag_levels = "A") + plot_layout(heights = c(3,2))
+
+cowplot::ggsave2(here::here("manuscript", "figures", "pnas-figure-1.pdf"),width = 13, units = "cm")
+
+use_fig
+
+```
+
+
+```{r, include = FALSE}
+#| label: simulations
+# Milk---------------------
+sims_milk <- readRDS(here::here("dev", "intervention-effectiveness-milk-low.rds"))
+
+sims_milk |>
+filter(delay == 5) |>
+mutate(more_infx = (1-avoided_infection)/(1-max(avoided_infection)))
+
+
+fig_milk_detected <- sims_milk |>
+ggplot(aes(delay, avoided_infection, color = factor(prop_production_drop)))+
+geom_line() +
+labs(
+    x = "Delay of intervention (days)",
+    color = "Milk\nproduction\ndrop"
+)+
+common_theme()
+
+
+# Number -------------------------------------
+sims_n <- readRDS(here::here("dev", "intervention-effectiveness-n-infected-low.rds"))
+
+fig_n_detected <- sims_n |>
+ggplot(aes(delay, avoided_infection, color = factor(n_detected)))+
+geom_line() +
+labs(
+    x = "Delay of intervention (days)",
+    color = "Number\ninfected\ndetected"
+)+
+common_theme()
+
+
+# Number Sx-------------------------------------
+sims_n_sx <- readRDS(here::here("dev", "intervention-effectiveness-n-symptomatic-low.rds"))
+
+fig_sx_detected <- sims_n_sx |>
+ggplot(aes(delay, avoided_infection, color = factor(n_symptomatic)))+
+geom_line() +
+labs(
+    x = "Delay of intervention (days)",
+    color = "Number\nsymptomatic\ndetected"
+)+
+common_theme()
+```
+
+```{r,include = FALSE}
+#| label: singleCowgamaa
+
+test_grid <- tidyr::crossing(
+    delay = seq(1,10,1),
+    n_detected = c(1),
+    gamma_post = 1/(seq(4,48,  length.out = 20)/24)
+)
+sims_n_opti <- future_pmap(test_grid,
+     function(delay, n_detected, gamma_post){
+      run_intervention_ode(n_detected = n_detected, delay_time = delay, gamma_post = gamma_post) |>
+      mutate(delay = delay, n_detected = n_detected, gamma_post = gamma_post, identifcation_quarantine = 1/gamma_post*24)
+      }) |>
+bind_rows() |>
+filter(time == max(time)) |>
+mutate(avoided_infection = 1- (R/500) / nccovid::epi_finalsize(2.53))
+
+d <- sims_n_opti |>
+mutate(criteria = ifelse(avoided_infection>.5, 1, 0))
+
+p_effect <- d |>
+mutate(avoided_plot = cut(avoided_infection, c(-Inf, 0.24, .50, .74, Inf), labels = c("0-25","26-50", "51-75",">75" ))) |>
+ggplot(aes(identifcation_quarantine, delay))+
+geom_tile(aes(fill = avoided_plot))+
+labs(y = "Delay to implemention\n(days)",
+x = "Time to identify and isolate (hrs)",
+fill = "Proportion of\ninfections\navoided")+
+theme_classic(base_size = 12)+
+coord_cartesian(expand = FALSE)+
+scale_fill_manual(values = viridis::viridis_pal()(4))+
+theme(legend.position = "top",legend.justification = "left", legend.title.align = 0,
+legend.text = element_text(size = rel(.4)), 
+legend.title = element_text(size = rel(.4)),
+axis.title = element_text( size =rel(.6)))+
+guides(fill = guide_legend(override.aes = list(size = rel(.5))),
+       color = guide_legend(override.aes = list(size = rel(.7))),
+       shape = guide_legend(override.aes = list(size = rel(.5))))
+
+```
+
+
+```{r echo=FALSE}
+#| label: singleCowgammaCounterfactual
+
+test_grid <- tidyr::crossing(
+    delay = seq(1,10,1),
+    n_detected = c(1),
+    gamma_post = 1/(seq(4,48,  length.out = 20)/24)
+)
+sims_n_opti_counterfactual <- future_pmap(test_grid,
+     function(delay, n_detected, gamma_post){
+      run_intervention_ode(n_detected = n_detected, delay_time = delay, gamma_in = 1/r_to_gamma(r = .884*.5, r_0 = 2.53),gamma_post = gamma_post) |>
+      mutate(delay = delay, n_detected = n_detected, gamma_post = gamma_post, identifcation_quarantine = 1/gamma_post*24)
+      }) |>
+bind_rows() |>
+filter(time == max(time)) |>
+mutate(avoided_infection = 1- (R/500) / nccovid::epi_finalsize(2.53))
+
+d_sims_n_opti_counterfactual <- sims_n_opti_counterfactual |>
+mutate(criteria = ifelse(avoided_infection>.5, 1, 0))
+
+use_cols <- viridis::viridis_pal()(4)
+
+names(use_cols) <- c("0-25","26-50", "51-75",">75" )
+
+p_effect_counterfactual <- d_sims_n_opti_counterfactual |>
+mutate(avoided_plot = cut(avoided_infection, c(-Inf, 0.24, .50, .74, Inf), labels = c("0-25","26-50", "51-75",">75" ))) |>
+mutate(avoided_plot =  factor(avoided_plot, levels = c("0-25","26-50", "51-75",">75" ))) |>
+ggplot(aes(identifcation_quarantine, delay))+
+geom_tile(aes(fill = avoided_plot))+
+labs(y = "Delay to implemention\n(days)",
+x = "Time to identify and isolate (hrs)"#,
+#fill = "Proportion of\ninfections avoided"
+)+
+theme_classic(base_size = 12)+
+coord_cartesian(expand = FALSE)+
+scale_fill_manual(values = viridis::viridis_pal()(4), drop = FALSE)+
+theme(legend.position = "none", 
+legend.text = element_text(size = rel(.6)), 
+legend.title = element_text(size = rel(.6)),
+axis.title = element_text( size =rel(.6)))+
+guides(fill = guide_legend(override.aes = list(size = rel(.5))))
+
+```
+
+```{r echo=FALSE}
+#| label: fig-simresults
+#| fig-cap: Estimated proportion of the final fraction infected in the non-intervention scenario under difference surveillance and delays to implementation. The intervention is assumed to be an identification of infected cows within 24 hours of becoming infectious in scenarios estimating milk production drop (A), number of infected cows detected (B), and number of syndromic cows detected (C). Relationship between the intervention intensity, i.e., identification and isolation of infected cattle and the delay to implement the intervention on the proportion of infections avoided when the surveillance allows for the detection of a single infected cow in the current scenario (D) and if the speed is 50% slower (E).
+
+p_top <- fig_n_detected +  fig_sx_detected + fig_milk_detected + plot_layout(axis_titles = "collect")
+
+#p_bottom <- p_effect+ p_effect_counterfactual + plot_layout(axes = "collect") 
+
+#p_top / p_bottom + plot_layout(height = c(3,1))+
+#plot_annotation(tag_levels = "A")
+```
+
+
+
+
+
+```{r}
+ 
+sims_n_effective <- readRDS(here::here("dev", "time-to-effective-strategy-sim_n_detected-low.rds"))
+
+sims_sx_effective <- readRDS(here::here("dev", "time-to-effective-strategy-sim_prop_sx_detected-low.rds"))
+
+sims_milk_effective <- readRDS(here::here("dev", "time-to-effective-strategy-sim_production_detected-low.rds"))
+
+table(sims_n_effective$identifcation_quarantine)
+sims_n_effective |>
+filter(avoided_infection >= .8) |>
+filter(delay==2 & round(identifcation_quarantine) ==12) |>
+arrange(desc(n_detected))
+
+sims_n_effective |>
+  filter(avoided_infection >= .8) |>
+  ggplot(aes(n_detected, identifcation_quarantine))+
+  geom_contour_filled(aes(bins = 5, z = delay))+
+  metR::geom_text_contour(aes(z = delay), size = 3, stroke = .4)
+
+
+plot_effective_n <- sims_n_effective |>
+  filter(avoided_infection >= .8) |>
+  ggplot(aes(n_detected, identifcation_quarantine))+
+  geom_tile(aes(fill = delay))+
+  geom_contour(aes(z = delay), color = "red", lty = 2, lwd = 1.2)+
+  labs(
+    x = "Number of Cows Detected",
+    y = "Intensity of Detection (Hours)"
+  )+
+  scale_fill_viridis_c(limits = c(0,6))+
+  scale_y_continuous(limits = c(0,24))+
+  metR::geom_text_contour(aes(z = delay), size = 3, stroke = .4)+
+  coord_cartesian(expand = FALSE)+
+  theme_classic()
+
+plot_effective_sx <- sims_sx_effective |>
+  filter(avoided_infection >= .8) |>
+  ggplot(aes(prop_symptomatic, identifcation_quarantine))+
+  geom_tile(aes(fill = delay))+
+  geom_contour(aes(z = delay), color = "red", lty = 2, lwd = 1.2)+
+  labs(
+    x = "Proportion of Herd with Symptoms",
+    y = "Intensity of Detection (Hours)"
+  )+
+  scale_fill_viridis_c(limits = c(0,6))+
+  scale_y_continuous(limits = c(0,24))+
+  metR::geom_text_contour(aes(z = delay), size = 3, stroke = .4)+
+  coord_cartesian(expand = FALSE)+
+  theme_classic()
+library(metR)
+plot_effective_milk <- sims_milk_effective |>
+  filter(avoided_infection >= .8) |>
+  select(prop_production_drop, identifcation_quarantine, delay) |>
+  arrange(identifcation_quarantine, delay) |>
+  unique() |>
+  ggplot(aes(prop_production_drop, identifcation_quarantine))+
+  geom_tile(aes(fill = delay))+
+  metR::geom_contour2(label.placer = label_placer_n(n = 2),
+  aes(z = delay, label = stat(level)))+
+  labs(
+    x = "Proportion Production Drop",
+    y = "Intensity of Detection (Hours)"
+  )+
+  scale_fill_viridis_c(limits = c(0,6))+
+  scale_y_continuous(limits = c(0,24))+
+
+  coord_cartesian(expand = FALSE)+
+  theme_classic()
+
+sims_milk_effective |>
+  filter(avoided_infection >= .5) |>
+  select(prop_production_drop, identifcation_quarantine, delay) |>
+  arrange(identifcation_quarantine, delay) |>
+  ggplot(aes(prop_production_drop, identifcation_quarantine))+
+  geom_contour_filled(aes(bins = 5, z = delay))+
+  metR::geom_text_contour(aes(z = delay), size = 3, stroke = .4)
+
+plot_effective_milk + plot_effective_n + plot_effective_sx + plot_layout(axes = "collect") & theme(legend.position = "top")
+```
+
+
+```{r}
+
+z_d <- readRDS(here::here("dev", "time-to-effective-strategy-sim_n_detected.rds"))
+
+z_d |>
+  filter(avoided_infection >= .5) |>
+   ggplot(aes(n_detected, identifcation_quarantine))+
+  geom_tile(aes(fill = delay))+
+  geom_contour(aes(z = delay), color = "red", lty = 2, lwd = 2)+
+  labs(
+    x = "Number of Cows Detected",
+    y = "Intensity of Detection (Hours)"
+  )+
+  scale_fill_viridis_c()+
+  metR::geom_text_contour(aes(z = delay), size = 5, stroke = .4)+
+  coord_cartesian(expand = FALSE)+
+  theme_classic()
+
+```
+
+
+```{r}
+
+mybreaks <- seq(1,11,1)
+use_length <- length(mybreaks)
+
+mycolors<- function(x) {
+   colors<-viridis::viridis_pal()( use_length )
+   colors[1:x]
+}
+#Function to create labels for legend
+grandmin <- min(sims_n_effective$delay,sims_n_sx$delay)-1
+grandmax <- max(sims_n_effective$delay,sims_n_sx$delay)
+
+max(sims_n_effective |>
+filter(avoided_infection>.8) |>
+pull(delay))
+
+breaklabel <- function(x){
+   labels<- paste0(mybreaks[1:(use_length-1)], "-", mybreaks[2:use_length])
+   labels[1:x]
+}
+
+generate_time_to_effective <- function(x, ...) {
+  list(geom_contour_filled(breaks= mybreaks, show.legend = TRUE),
+  scale_fill_manual(values = mycolors(use_length), labels=breaklabel(use_length), name="Delay (days)", drop=FALSE) ,
+  # geom_contour(breaks = c(1,2,3,4,5,6,7,8,9,10), aes(z = delay), color = "red", lty = 2, lwd = 1.2),
+  scale_y_continuous(limits = c(4, 26),
+                     name = "New time from infection to isolation (hrs)",
+                     breaks = seq(4,24,4), expand = c(0,0)),
+#   metR::geom_text_contour(
+#                           skip = 0, 
+#                           breaks = seq(1,10,1), 
+#                           aes(z = delay), 
+#                           size = 5, 
+#                           stroke = .3,
+#                           label.placer = metR::label_placer_fraction(frac = 0.3,rot_adjuster = isoband::angle_halfcircle_bottom()
+# ),
+                          # rotate = FALSE),
+   theme_classic(),
+  #theme(#legend.position.inside = c(.7,.8)),
+  theme(panel.background = element_rect(fill = "grey80")),
+     theme(legend.title = element_text(size = rel(1.1)),
+     legend.text = element_text(size  = rel(1.1)))
+  #   guides(fill=guide_legend(position = "inside"))
+   )
+}
+
+p1 <- sims_n_effective |>
+  filter(avoided_infection >= .8) |>
+  ggplot(aes(n_detected, identifcation_quarantine, z = delay))+
+  generate_time_to_effective()+
+  guides(fill = guide_legend(nrow = 1))+
+  theme(legend.position  = "bottom")+
+  scale_x_continuous(name = "Number of infected at detection", limits = c(1,NA), expand = c(0,0), breaks = c(1, seq(5,30,5)))
+
+colorz <- ggpubr::get_legend(p1)
+
+p1 <- p1 + theme(legend.position = "none")
+
+p2 <- sims_milk_effective |>
+  filter(avoided_infection >= .8) |>
+  ggplot(aes(prop_production_drop, identifcation_quarantine, z = delay))+
+  generate_time_to_effective()+
+  theme(legend.position  = "none")+
+  scale_x_continuous(name = "Milk production drop at detection", limits = c(.001,NA), expand = c(0,0))
+
+p3 <- sims_sx_effective |>
+  filter(avoided_infection >= .8) |>
+  ggplot(aes(prop_symptomatic*500, identifcation_quarantine, z = delay))+
+  generate_time_to_effective()+
+  theme(legend.position  = "none")+
+  scale_x_continuous(name = "Number of symptomatic at detection", limits = c(1,NA), expand = c(0,0))
+  
+
+lower_panel2 <- p1 + p3 + p2 +plot_layout(axes = "collect")+ plot_annotation(tag_levels = "A")
+
+lower_panel2
+fig_2 <- p_top/lower_panel2 + plot_annotation(tag_levels = "A")  
+fig_2_use <- fig_2 + colorz + plot_layout(height = c(.47, .47, .03))
+
+
+cowplot::ggsave2(fig_2_use, filename = here::here("manuscript", "figures", "pnas-figure-2.pdf"), height = 10, width = 8.5)
+
+```
+
+# Discussion
+
+<!--
+1. Let’s think about inverting figure 2 in a new figure. 
+2. Figure 2 is really helpful for visualizing how ineffective a strategy is. 
+3. The higher the value on the graph, the more ineffective a particular strategy is. 
+4. Another question is “how long do we have before a particular intervention becomes ineffective?” 
+5. To visualize that answer, you specify an intervention strategy (isolation level gamma and detection decision) and then find a the time at which a certain number fraction of the population gets infected. For example, 
+
+6. It will be important to talk about why the different surveillance strategies have different effects.
+7. My guess is that milk production is a lagging indicator of infections and so creates an implicit time delay compared to true infections. 
+
+8. I wonder if it would be helpful to have a counter-factual scenario.
+9. “Imagine that H5N1 had the same R0, but spread half as fast.
+10. In that case, we would have XX more days to implement a strategy.”
+11. This would really hammer home the idea that time is a limiting factor in this particular situation. 
+-->
+
+Our findings suggest.
+
+
+
+Unsurprising, we obsered non-linear effects of identifying outbreaks early on farms.
+Outbreaks happen fast and without both rigors surveillance and rapid deployment of interventions, outbreaks are challenging to contain.
+These delays could also be compounded by testing, for example if a farmer notices several symptomatic cows, but testing takes 4 days prior to any intervention can be made, then the intervention in meaningless.
+The found that using more passive surveillance approaches such as the milk production and proportion of cattle with clinical symptoms serverly restricts the feasible space for intervention.
+This is likely due to the long delay between the recognition of either a sufficient nmber of cattle expressing symptoms or for the global milk production to manifest.
+By the time these thresholdholds are met, a sufficient number of cows are infected and the outbreak is much more difficult to stop.
+
+
+# Materials and methods
+
+
+\begin{align}
+  \frac{dS}{dt} &= - \beta S I \\
+  \frac{dI}{dt} &= \beta S I - \gamma I \\
+  \frac{dB}{dt} &= \gamma I - \kappa B \\
+  \frac{dR}{dt} &= \kappa B
+  \label{eq:ode}
+\end{align}
+
+
+
+
+\begin{equation}
+    \gamma_{t}=
+    \begin{cases}
+      \gamma_0, & \text{if}\ t < t_{intervention} \\
+      \gamma_0 + \gamma_{intervention}, & \text{otherwise}
+    \end{cases}
+    \label{eq:gammaIntervention}
+\end{equation}
+
+# References
+
+
+```{r}
+
+sims <- run_det_ode() |>
+format_det_ode_output()
+
+
+sims |>
+as_tibble() |>
+#filter(time < 45) |>
+filter(B > 25)
+
+sims |>
+as_tibble() |>
+filter(time < 45) |>
+filter(time == 10)
+
+p1 <- sims |>
+as_tibble() |>
+filter(time < 27) |>
+ggplot(aes(time))+
+geom_line(aes(y = Infected), lty = 1, col = "#E69F00", lwd = 1.2)+
+geom_line(aes(y = B), lty = 4, col = "#56B4E9", lwd = 1.2)+
+theme_classic(base_size = 14)+
+geom_segment(aes(x = -Inf, xend = 10, y = 25, yend = 25), lty = 2, lwd = 1.2)+
+geom_segment(aes(x = 10, xend = 10, y = 25, yend = -Inf), lty = 2, lwd = 1.2)+
+geom_segment(aes(x = -Inf, xend = 16, y = 25, yend = 25), lty = 2, lwd = 1.2)+
+geom_segment(aes(x = 16, xend = 16, y = 25, yend = -Inf), lty = 2, lwd = 1.2)+
+theme(axis.text = element_blank(), axis.ticks = element_blank())+
+coord_cartesian(expand = FALSE)+
+labs(y = "Number of Cows")
+
+ sims |>
+as_tibble() |>
+filter(milk_production/max(milk_production) < .97) |>
+head()
+
+p2 <- sims |>
+as_tibble() |>
+filter(time < 27) |>
+ggplot(aes(time))+
+geom_line(aes(y = milk_production/max(milk_production)), lty = 1, col = "#009E73", lwd = 1.2)+
+theme_classic(base_size = 14)+
+geom_segment(aes(x = -Inf, xend = 18, y = 48496./50000, yend = 48496./50000), lty = 2, lwd = 1.2)+
+geom_segment(aes(x = 18, xend = 18, y = 48496./50000, yend = -Inf), lty = 2, lwd = 1.2)+
+theme(axis.text = element_blank(), axis.ticks = element_blank())+
+coord_cartesian(expand = FALSE)+
+labs(y = "Production Drop")
+
+
+cowplot::ggsave2("demonstration.svg",p1/p2)
+
+```
