@@ -2,7 +2,7 @@
 "_PACKAGE"
 
 ## usethis namespace: start
-#' @useDynLib rRsurveillance
+#' @useDynLib h5n1speed
 #' @importFrom odin odin
 ## usethis namespace: end
 NULL
