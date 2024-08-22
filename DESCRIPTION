@@ -26,3 +26,4 @@ Suggests:
     quarto,
     rmarkdown
 VignetteBuilder: knitr
+URL: https://wf-id.github.io/h5n1speed/

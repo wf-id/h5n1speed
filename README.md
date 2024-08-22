@@ -1,12 +1,15 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# rRsurveillance
+# Time is of the essence: effectiveness of dairy farm control strategies for H5N1 are limited by fast spread
 
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of rRsurveillance is to …
+This repository hosts the code, data and supporting analysis for “Time
+is of the essence: effectiveness of dairy farm control strategies for
+H5N1 are limited by fast spread.” The analysis was structured in the
+form of an R package to facilitate reproducibility.
 
 ## Installation
 
@@ -15,31 +18,62 @@ You can install the development version of rRsurveillance from
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("wf-id/rRsurveillance-h5n1")
+remotes::install_github("wf-id/h5n1speed")
 ```
 
-## Example
+## Running the analysis
 
-This is a basic example which shows you how to solve a common problem:
+The primary analysis scripts are available as:
 
-``` r
-library(rRsurveillance)
-## basic example code
-```
+- **manuscript/intervention-effectiveness.R** contains the code to
+  generate the figures shown in Figure 2 panels A-C which shows the
+  effectiveness of each surveillance strategy and detection threshold at
+  prevent infections.
+- **manuscript/time-to-effective-strategy.R** contains the code to
+  generate the time required to realize an effective strategy. These
+  values are used to generate Figure 2 panels D-E.
+- **manuscript/delay_strategy.qmd** contains the code to generate Figure
+  1, panel A and assembles the figures to make Figure 2.
 
-``` r
- run_det_ode(sim.length = 40) |>
-   format_det_ode_output() |>
-   plot()
-```
+Please note that the R scripts were run across 38 threads on a single
+node of the Wake Forest University HPC which took ~5-6hrs. Running these
+scripts on a single machine may take a significantly long time.
 
-<img src="man/figures/README-unnamed-chunk-2-1.png" width="100%" />
+## Underlying functions
 
-``` r
-set.seed(42)
-z <- run_odin_vaccines(intervention_time = Inf)
-with(subset(z, compartment == "S_inc"),
-    plot(time, value, type = "b", pch = 19))
-```
+We have parameterized our analysis into an R package to faciliate ease
+of use and allow us to explore scenarios of speed on surveillance and
+intervention strategies.
 
-<img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />
+- `run_det_ode` contains the code used to run a deterministic
+  compartmental model as described in our manuscript. This code use the
+  deSolve package to solve the differential equations. Additionally,
+  this code adds in the milk production.
+- `detect_infections_ode` processes the outputs from the `run_det_ode`
+  and find when some particular detection threshold has been met (e.g.,
+  number of cows infected cumulatively, number of symptomatic cows with
+  clinical signs, some proportion drop in milk production). This
+  function returns a list object with the timepoint at which the
+  detection threshold is met.
+- `run_intervention_ode` allows a given intervention to be applied given
+  some detection and surveillance approach (e.g., the number symptomatic
+  detected) at that time with some delay with varying intensity.
+
+## ODE System
+
+As a reminder, the ODE is shown below:
+
+$$
+\begin{align}
+  \frac{dS}{dt} &= - \beta S I/N \\
+  \frac{dI}{dt} &= \beta S I/N - \gamma I \\
+  \frac{dB}{dt} &= \gamma I - \kappa B \\
+  \frac{dR}{dt} &= \kappa B \\
+\end{align}
+$$
+
+Milk production is calculated as follows:
+
+$$
+\text{Milk} = 100 * (S + I) + 75 * B + 80 * R 
+$$

@@ -15,7 +15,7 @@ sir_base_ <- R6::R6Class(
     interpolate_t = NULL,
     cfuns = list(
       rhs_dde = "sir_base_rhs_dde"),
-    dll = "rRsurveillance",
+    dll = "h5n1speed",
     user = c("beta", "gamma", "I_ini", "nsim", "S_ini", "steps_per_day"),
 
     ## This is never called, but is used to ensure that R finds our
@@ -24,19 +24,19 @@ sir_base_ <- R6::R6Class(
     ## FFI registration system.
     registration = function() {
       if (FALSE) {
-        .C("sir_base_rhs_dde", package = "rRsurveillance")
+        .C("sir_base_rhs_dde", package = "h5n1speed")
       }
     },
 
     ## This only does something in delay models
     set_initial = function(step, y, use_dde) {
       .Call("sir_base_set_initial", private$ptr, step, y, use_dde,
-            PACKAGE= "rRsurveillance")
+            PACKAGE= "h5n1speed")
     },
 
     update_metadata = function() {
       meta <- .Call("sir_base_metadata", private$ptr,
-                    PACKAGE = "rRsurveillance")
+                    PACKAGE = "h5n1speed")
       private$variable_order <- meta$variable_order
       private$output_order <- meta$output_order
       private$n_out <- meta$n_out
@@ -50,7 +50,7 @@ sir_base_ <- R6::R6Class(
     initialize = function(..., user = list(...), use_dde = FALSE,
                           unused_user_action = NULL) {
       private$odin <- asNamespace("odin")
-      private$ptr <- .Call("sir_base_create", user, PACKAGE = "rRsurveillance")
+      private$ptr <- .Call("sir_base_create", user, PACKAGE = "h5n1speed")
       self$set_user(user = user, unused_user_action = unused_user_action)
       private$use_dde <- use_dde
       private$update_metadata()
@@ -58,7 +58,7 @@ sir_base_ <- R6::R6Class(
 
     ir = function() {
       path_ir <- system.file("odin/sir_base.json", mustWork = TRUE,
-                             package = "rRsurveillance")
+                             package = "h5n1speed")
       json <- readLines(path_ir)
       class(json) <- "json"
       json
@@ -68,7 +68,7 @@ sir_base_ <- R6::R6Class(
     ## nice, but that's not super straightforward to do.
     set_user = function(..., user = list(...), unused_user_action = NULL) {
       private$odin$support_check_user(user, private$user, unused_user_action)
-      .Call("sir_base_set_user", private$ptr, user, PACKAGE = "rRsurveillance")
+      .Call("sir_base_set_user", private$ptr, user, PACKAGE = "h5n1speed")
       private$update_metadata()
     },
 
@@ -78,11 +78,11 @@ sir_base_ <- R6::R6Class(
     ## closer to the js version which requires that we always pass the
     ## time in.
     initial = function(step) {
-      .Call("sir_base_initial_conditions", private$ptr, step, PACKAGE = "rRsurveillance")
+      .Call("sir_base_initial_conditions", private$ptr, step, PACKAGE = "h5n1speed")
     },
 
     rhs = function(step, y) {
-      .Call("sir_base_rhs_r", private$ptr, step, y, PACKAGE = "rRsurveillance")
+      .Call("sir_base_rhs_r", private$ptr, step, y, PACKAGE = "h5n1speed")
     },
 
     update = function(step, y) {
@@ -90,7 +90,7 @@ sir_base_ <- R6::R6Class(
     },
 
     contents = function() {
-      .Call("sir_base_contents", private$ptr, PACKAGE = "rRsurveillance")
+      .Call("sir_base_contents", private$ptr, PACKAGE = "h5n1speed")
     },
 
     transform_variables = function(y) {
@@ -132,7 +132,7 @@ sir_vaccine_ <- R6::R6Class(
     interpolate_t = NULL,
     cfuns = list(
       rhs_dde = "sir_vaccine_rhs_dde"),
-    dll = "rRsurveillance",
+    dll = "h5n1speed",
     user = c("beta", "detect_n", "gamma", "I_ini", "intervention_scenario",
              "kappa", "nsim", "S_ini", "steps_per_day", "t_intervention",
              "zeta"),
@@ -143,19 +143,19 @@ sir_vaccine_ <- R6::R6Class(
     ## FFI registration system.
     registration = function() {
       if (FALSE) {
-        .C("sir_vaccine_rhs_dde", package = "rRsurveillance")
+        .C("sir_vaccine_rhs_dde", package = "h5n1speed")
       }
     },
 
     ## This only does something in delay models
     set_initial = function(step, y, use_dde) {
       .Call("sir_vaccine_set_initial", private$ptr, step, y, use_dde,
-            PACKAGE= "rRsurveillance")
+            PACKAGE= "h5n1speed")
     },
 
     update_metadata = function() {
       meta <- .Call("sir_vaccine_metadata", private$ptr,
-                    PACKAGE = "rRsurveillance")
+                    PACKAGE = "h5n1speed")
       private$variable_order <- meta$variable_order
       private$output_order <- meta$output_order
       private$n_out <- meta$n_out
@@ -169,7 +169,7 @@ sir_vaccine_ <- R6::R6Class(
     initialize = function(..., user = list(...), use_dde = FALSE,
                           unused_user_action = NULL) {
       private$odin <- asNamespace("odin")
-      private$ptr <- .Call("sir_vaccine_create", user, PACKAGE = "rRsurveillance")
+      private$ptr <- .Call("sir_vaccine_create", user, PACKAGE = "h5n1speed")
       self$set_user(user = user, unused_user_action = unused_user_action)
       private$use_dde <- use_dde
       private$update_metadata()
@@ -177,7 +177,7 @@ sir_vaccine_ <- R6::R6Class(
 
     ir = function() {
       path_ir <- system.file("odin/sir_vaccine.json", mustWork = TRUE,
-                             package = "rRsurveillance")
+                             package = "h5n1speed")
       json <- readLines(path_ir)
       class(json) <- "json"
       json
@@ -187,7 +187,7 @@ sir_vaccine_ <- R6::R6Class(
     ## nice, but that's not super straightforward to do.
     set_user = function(..., user = list(...), unused_user_action = NULL) {
       private$odin$support_check_user(user, private$user, unused_user_action)
-      .Call("sir_vaccine_set_user", private$ptr, user, PACKAGE = "rRsurveillance")
+      .Call("sir_vaccine_set_user", private$ptr, user, PACKAGE = "h5n1speed")
       private$update_metadata()
     },
 
@@ -197,11 +197,11 @@ sir_vaccine_ <- R6::R6Class(
     ## closer to the js version which requires that we always pass the
     ## time in.
     initial = function(step) {
-      .Call("sir_vaccine_initial_conditions", private$ptr, step, PACKAGE = "rRsurveillance")
+      .Call("sir_vaccine_initial_conditions", private$ptr, step, PACKAGE = "h5n1speed")
     },
 
     rhs = function(step, y) {
-      .Call("sir_vaccine_rhs_r", private$ptr, step, y, PACKAGE = "rRsurveillance")
+      .Call("sir_vaccine_rhs_r", private$ptr, step, y, PACKAGE = "h5n1speed")
     },
 
     update = function(step, y) {
@@ -209,7 +209,7 @@ sir_vaccine_ <- R6::R6Class(
     },
 
     contents = function() {
-      .Call("sir_vaccine_contents", private$ptr, PACKAGE = "rRsurveillance")
+      .Call("sir_vaccine_contents", private$ptr, PACKAGE = "h5n1speed")
     },
 
     transform_variables = function(y) {

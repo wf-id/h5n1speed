@@ -9,3 +9,6 @@
 ^README.html$
 ^manuscript$
 ^dev$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

@@ -1,6 +1,7 @@
 #' Run ODE
 #'
 #' Run ordinary differential equation model
+#' 
 #' @param init.inf integer, the number of initial infection
 #' @param herd.size integer, the size of the herd
 #' @param r0 positive number, the basic reproduction number
@@ -221,5 +222,3 @@ plot.rRsurveillace_deterministic <- function(x, ...) {
 sigmoid_fun <- function(x, x0 = 4, k = 2) {
   1 / (1 + exp(-k * (x - x0)))
 }
-
-1 + sigmoid_fun(11, 6) * .75

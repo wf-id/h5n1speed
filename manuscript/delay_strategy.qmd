@@ -69,16 +69,16 @@ dat_pathogen <- tribble(
   "H5N1 low\n(R0 = 1.2)", 1.2, 1.15, "Bellotti et al (2024)",
   "H5N1 high\n(R0 = 1.5)", 1.5, 1.15, "Bellotti et al (2024)",
   "H1N1", 2.3, 3.5,"Nishiura et al 2010",
-  "SARS-CoV-2", 2.5, 3.5, "REF",
-  "SARS", 2.3, 8.4, "REF",
+  "SARS-CoV-2", 2.4, 3.5, "Ferguson",
+  "SARS", 2.5, 8.4, "Chowell",
   "Ebola", 1.5, 5.61,"lthaus (2014)",
   "RSV", 3, 7, "Reis and Shaman (2016)",
   "Measles", 14, 11.7, "Vink et al (2014)",
   "Varicella", 4.3, 14,"Vink et al (2014)",
   "Smallpox", 4.5, 17.7,"Vink et al (2014)",
   "Mumps", 11, 18,"Vink et al (2014)",
-  "MERS", .63, 5.5, "REF",
-  "Marburg", 1.59, 9, "REF",
+  "MERS", .63, 5.5, "Cauchemez et al",
+  "Marburg", 1.59, 9, "Ajelli and Merler",
   "Nipah", 0.33, 13,"Cortes et al (2018)",
   #"Mpox Clade IIb", 2.43,8.7,"Ponce et al (2024)",
   "Mpox Clade IIa", 0.85,14.2,"Ponce et al (2024)",
@@ -86,15 +86,8 @@ dat_pathogen <- tribble(
   #"African Swine Fever", 3.56, 11.19, "Tiwari (2024)",  #interval = I period, SIR
   "PRRS", 2.6, 14.5, "Charpin (2012)",
   "Classical Swine Fever", 13.7, 6, "Laevens (1999)",
-  # "Tuberculosis (Human)", ,,,
-  # "Bovine Tuberculosis", , ,,
   #"Streptococcus equi equi", 2.2, 13, "Houben (2022)",
-  # "HIV", , ,,
-  # "Mycobacteria avian paratuberculosis", , ,,
   "Rabies (canine)", 1.2, 24.9, "Hampson (2009)"
-  # "Chronic Wasting Disease", , , ,
-  # "Bovine Spongiform Encephalopathy", , ,,
-  # "Scrapies", , ,,
 
 )
 
@@ -105,10 +98,10 @@ r0_se <- function(r, z, N){
 
 dat_pathogen$r <- pmap_dbl(dat_pathogen, function(R0, Interval, ...) R2r(R0, Interval))
 
-dat_pathogen |>
-select(Pathogen, R0, Interval, r, Source) |>
-mutate(r = round(r, 2)) |>
-knitr::kable(format = "latex")
+# dat_pathogen |>
+# select(Pathogen, R0, Interval, r, Source) |>
+# mutate(r = round(r, 2)) |>
+# knitr::kable(format = "latex")
 
 p_all <- dat_pathogen |>
 ggplot(aes(R0, r))+

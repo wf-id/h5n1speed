@@ -1,6 +1,8 @@
 #' Estimate ODE Intervention outcomes
 #'
-#' Description
+#' Simulating the outcomes of the ODE system when an intervention of
+#' some intensity gamma_post is applied at some time point given the threshold
+#' of detection and applied at some delay from identification.
 #'
 #' @param r0_in R0 input
 #' @param gamma_in pre-intervention gamma
