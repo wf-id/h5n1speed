@@ -213,7 +213,7 @@ generate_time_to_effective <- function(x, ...) {
   list(geom_contour_filled(breaks= mybreaks, show.legend = TRUE),
   scale_fill_manual(values = mycolors(use_length), labels=breaklabel(use_length), name="Delay (days)", drop=FALSE) ,
   # geom_contour(breaks = c(1,2,3,4,5,6,7,8,9,10), aes(z = delay), color = "red", lty = 2, lwd = 1.2),
-  scale_y_continuous(limits = c(4, 26),
+  scale_y_continuous(limits = c(4, 24),
                      name = "New time from infection to isolation (hrs)",
                      breaks = seq(4,24,4), expand = c(0,0)),
    theme_classic(),
@@ -227,6 +227,7 @@ generate_time_to_effective <- function(x, ...) {
 
 p1 <- sims_n_effective |>
   filter(avoided_infection >= .8) |>
+  filter(identifcation_quarantine <= 20) |>
   ggplot(aes(n_detected, identifcation_quarantine, z = delay))+
   generate_time_to_effective()+
   guides(fill = guide_legend(nrow = 1))+
@@ -239,17 +240,19 @@ p1 <- p1 + theme(legend.position = "none")
 
 p2 <- sims_milk_effective |>
   filter(avoided_infection >= .8) |>
+  filter(identifcation_quarantine <= 20) |>
   ggplot(aes(prop_production_drop, identifcation_quarantine, z = delay))+
   generate_time_to_effective()+
   theme(legend.position  = "none")+
-  scale_x_continuous(name = "Milk production drop at detection", limits = c(.001,NA), expand = c(0,0))
+  scale_x_continuous(name = "Milk production drop at detection", limits = c(.001,.04), expand = c(0,0))
 
 p3 <- sims_sx_effective |>
   filter(avoided_infection >= .8) |>
+  filter(identifcation_quarantine <= 20) |>
   ggplot(aes(prop_symptomatic*500, identifcation_quarantine, z = delay))+
   generate_time_to_effective()+
   theme(legend.position  = "none")+
-  scale_x_continuous(name = "Number of symptomatic at detection", limits = c(1,NA), expand = c(0,0))
+  scale_x_continuous(name = "Number of symptomatic at detection", limits = c(1,25), expand = c(0,0))
   
 
 lower_panel2 <- p1 + p3 + p2 +plot_layout(axes = "collect")+ plot_annotation(tag_levels = "A")

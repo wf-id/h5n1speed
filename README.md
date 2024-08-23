@@ -7,9 +7,9 @@
 <!-- badges: end -->
 
 This repository hosts the code, data and supporting analysis for “Time
-is of the essence: effectiveness of dairy farm control strategies for
-H5N1 are limited by fast spread.” The analysis was structured in the
-form of an R package to facilitate reproducibility.
+is of the essence: effectiveness of dairy farm control for H5N1 is
+limited by fast spread.” The analysis was structured in the form of an R
+package to facilitate reproducibility.
 
 ## Installation
 
