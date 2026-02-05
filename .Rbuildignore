@@ -1,0 +1,16 @@
+^LICENSE\.md$
+^data-raw$
+^justfile$
+^\.github$
+^README\.Rmd$
+^vignettes/*_files$
+^vignettes/*_cache$
+^vignettes/r-surveillance-approaches_cache/*$
+^README.html$
+^manuscript$
+^dev$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.here$
+^justfile2$

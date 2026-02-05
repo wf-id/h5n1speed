@@ -1,0 +1,7 @@
+inst/doc
+vignettes/*_cache/
+vignettes/*_files/
+docs
+flu.R
+agai.R
+justfile2

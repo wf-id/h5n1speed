@@ -1,0 +1,104 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usepackage{pgfplots}
+\usepackage{amsmath}
+\usepackage[dvipsnames]{xcolor}
+\definecolor{viridisblue}{HTML}{440154}
+\definecolor{viridisgreen}{HTML}{26828E}
+\pgfplotsset{compat=1.18}
+
+\begin{document}
+
+\begin{tikzpicture}
+\begin{axis}[
+    width=12cm,
+    height=8cm,
+    xlabel={Time},
+    ylabel={Cumulative Infected},
+    axis y line=left,
+    axis x line =middle,
+    axis line style={->},
+    xticklabels = {},
+    yticklabels = {},
+    xtick = \empty,
+    ytick = \empty,
+    grid=none,
+    legend pos=south east,
+    xlabel style={at={(1.0,0)}, anchor=north},
+    xmin=0, xmax=100,
+    ymin=0, ymax=1.1,
+    thick,
+    tick style ={color = black, thick, style = below},
+    major tick length = .5cm,
+    xtick pos=lower,
+    extra x tick style={tick label style={below, align = center}},
+    extra x ticks={18.5, 53},
+    extra x tick labels={
+    $t_{\text{intervention,}}$ \\ \scriptsize{higher $r$}, 
+    $t_{\text{intervention,}}$ \\ \scriptsize{lower $r$}
+},
+    extra x tick style={tick label style={below}, color={red, blue}}
+]
+
+
+% Format: (time, cumulative_infected)
+
+%% Slower Dynamics
+\addplot[color=viridisblue, line width=1.5pt, smooth, mark=none, mark size=2pt] 
+    table {../data-raw/low-r.txt};
+\addplot[color=viridisgreen, line width=1.5pt, dashed, mark=none, mark size=2pt] 
+   table {../data-raw/low-r-intervention.txt};
+
+
+%% Faster dynamics
+\addplot[color=viridisgreen, line width=1.5pt, smooth, mark=none, mark size=2pt] 
+   table {../data-raw/high-r.txt};
+\addplot[color=viridisblue, line width=1.5pt, dashed, mark=none, mark size=2pt] 
+   table {../data-raw/high-r-intervention.txt};
+
+% Define t_int (intervention time) - change this value as needed
+\def\tint{40}
+\def\tdelay{7}
+\def\yint{0.30}  % y-value at t_int (must match your data)
+
+\node[above, viridisblue] at (axis cs:58,0.92) {Higher r};
+\node[above, viridisgreen] at (axis cs:58,0.7) {Lower r};
+
+
+\addplot[only marks, mark=*, mark size=3pt, mark options={thick}, color=viridisgreen] coordinates {(53, 0.48)};
+\addplot[only marks, mark=*, mark size=3pt, mark options={thick}, color=viridisblue] coordinates {(18.5, 0.83)};
+
+% \node[right, black, font=\small] at (axis cs:61,.66) {$I_{\text{max}}$};
+% \node[left, black, font=\small] at (axis cs:15,.66) {$I_{\text{max}}$};
+
+
+
+% Dection
+\draw[dotted, viridisgreen] (axis cs:46,0) -- (axis cs:46,\yint);
+\draw[dotted, viridisblue] (axis cs:11.5,0) -- (axis cs:11.5,\yint);
+
+% Intervention
+\draw[dotted, viridisgreen] (axis cs:46+\tdelay,0) -- (axis cs:46+\tdelay,.48);
+\draw[dotted, viridisblue] (axis cs:11.5+\tdelay,0) -- (axis cs:11.5+\tdelay,.83);
+
+\node[above, viridisblue] at (axis cs:16.8, 0.83) {A};
+\node[above, viridisgreen] at (axis cs:51.1,0.47) {B};
+
+% Reference line for detection
+\draw[dashed, black, thick] (axis cs:0,\yint) -- (axis cs:46,\yint);
+
+\node[above, black] at (axis cs:32.4,0.30) {Detection threshold};
+
+\end{axis}
+
+\node[draw, fill=yellow!20, align=center, anchor=south] at (8,1) {
+    $t_{\text{detection}} + t_{\text{delay}}$\\ $= t_{\text{intervention}}$
+};
+
+
+
+% Add reference lines
+
+
+\end{tikzpicture}
+
+\end{document}

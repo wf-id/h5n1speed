@@ -1,0 +1,266 @@
+---
+title: "Feasible of different control strategies on farms during H5N1 outbreaks"
+format: 
+  pdf:
+    fig-height: 6
+    fig-width: 7
+---
+
+# Set-up of function
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+par(mar = c(4.1, 5.1, 0.5, 0.5), las = 1)
+```
+
+
+```{r setup, include = FALSE}
+library(dplyr)
+library(tibble)
+library(tidyr)
+library(purrr)
+library(ggplot2)
+library(ggsci)
+library(patchwork)
+library(h5n1speed)
+```
+
+```{r include=FALSE}
+#| label: themeSetup
+my_x_lab <- "Proportion of possible infections avoided"
+
+common_theme <-function() list(
+    coord_cartesian(expand = FALSE),
+        theme_classic(),
+        theme(panel.grid.major.x = element_line(color = "grey80")),
+        theme(panel.grid.major.y = element_line(color = "grey80")),
+    scale_color_nejm(),
+    scale_y_continuous(limits = c(0,1),
+    breaks = c(0, .2, .4, .6, .8, 1)),
+    theme(legend.position.inside = c(.85,.6)),
+    theme(axis.text = element_text(size = rel(1.1)), axis.title = element_text(size = rel(1.1))),
+    theme(legend.title = element_text(size = rel(.8)),
+    legend.text = element_text(size  = rel(.8))),
+    guides(color=guide_legend(position = "inside")),
+    scale_x_continuous(limits = c(0,11),
+                     breaks = c(2,4,6,8,10)),
+    labs(y = my_x_lab),
+    theme(axis.title.y = element_text(size = rel(.8)))
+)
+
+```
+
+
+# Figure 1
+
+
+```{r echo=FALSE}
+#| label: fig-speedComparison
+
+R2r <- function(R0, infectiousness) { 
+  R0 * (1 / infectiousness) - 1 / infectiousness
+}
+
+dat_pathogen <- tribble(
+  ~"Pathogen",~"R0", ~"Interval", ~"Source",
+  "H5N1 low\n(R0 = 1.2)", 1.2, 0.87, "Bellotti et al (2024)",
+  "H5N1 high\n(R0 = 1.5)", 1.8, 1.08, "Rawson et al (2025)",
+  "H1N1", 2.3, 3.5,"Nishiura et al 2010",
+  "SARS-CoV-2", 2.4, 3.5, "Ferguson",
+  "SARS", 2.5, 8.4, "Chowell",
+  "Ebola", 1.5, 5.61,"lthaus (2014)",
+  "RSV", 3, 7, "Reis and Shaman (2016)",
+  "Measles", 14, 11.7, "Vink et al (2014)",
+  "Varicella", 4.3, 14,"Vink et al (2014)",
+  "Smallpox", 4.5, 17.7,"Vink et al (2014)",
+  "Mumps", 11, 18,"Vink et al (2014)",
+  "MERS", .63, 5.5, "Cauchemez et al",
+  "Marburg", 1.59, 9, "Ajelli and Merler",
+  "Nipah", 0.33, 13,"Cortes et al (2018)",
+  #"Mpox Clade IIb", 2.43,8.7,"Ponce et al (2024)",
+  "Mpox Clade IIa", 0.85,14.2,"Ponce et al (2024)",
+  "FMD", 2.5, 11, "Keeling and Rohani (2008)", #interval = E period + I period, SEIR
+  #"African Swine Fever", 3.56, 11.19, "Tiwari (2024)",  #interval = I period, SIR
+  "PRRS", 2.6, 14.5, "Charpin (2012)",
+  "Classical Swine Fever", 13.7, 6, "Laevens (1999)",
+  #"Streptococcus equi equi", 2.2, 13, "Houben (2022)",
+  "Rabies (canine)", 1.2, 24.9, "Hampson (2009)"
+
+)
+
+r0_se <- function(r, z, N){
+  se <- sqrt((1 + (1-z)* r^2)/ (N * z * (1-z)))
+  sprintf("%s (%s to %s)", round(r,2), round(r - 2 * se, 2), round(r + 2* se,2))
+}
+
+dat_pathogen$r <- pmap_dbl(dat_pathogen, function(R0, Interval, ...) R2r(R0, Interval))
+
+# dat_pathogen |>
+# select(Pathogen, R0, Interval, r, Source) |>
+# mutate(r = round(r, 2)) |>
+# knitr::kable(format = "latex")
+
+p_all <- dat_pathogen |>
+ggplot(aes(R0, r))+
+geom_point()+
+ggrepel::geom_text_repel(aes(label = Pathogen))+
+theme_classic()+
+geom_hline(yintercept = 0, lty = 2)+
+geom_vline(xintercept = 1, lty = 2)+
+scale_x_continuous(transform = "log2", 
+breaks = c(1,2,3,4,5,6,7,8,9,10,15), 
+name = expression(R[0]~"(log 2 scale)"), 
+limits = c(1, NA), expand = c(0,.1))+
+scale_y_continuous(limits = c(0,1.4), expand = c(0,0))
+
+
+cowplot::ggsave2(here::here("manuscript","pathogen-r-R.pdf"), p_all, height = 8.5, width =11 )
+
+```
+
+# Figure 2 A-C
+
+```{r, include = FALSE}
+#| label: simulations
+# Milk---------------------
+sims_milk <- readRDS(here::here("dev", "intervention-effectiveness-milk-low.rds"))
+
+sims_milk |>
+filter(delay == 5) |>
+mutate(more_infx = (1-avoided_infection)/(1-max(avoided_infection)))
+
+
+fig_milk_detected <- sims_milk |>
+ggplot(aes(delay, avoided_infection, color = factor(prop_production_drop)))+
+geom_line() +
+labs(
+    x = "Delay of intervention (days)",
+    color = "Milk\nproduction\ndrop"
+)+
+common_theme()
+
+
+# Number -------------------------------------
+sims_n <- readRDS(here::here("dev", "intervention-effectiveness-n-infected-low.rds"))
+
+fig_n_detected <- sims_n |>
+ggplot(aes(delay, avoided_infection, color = factor(n_detected)))+
+geom_line() +
+labs(
+    x = "Delay of intervention (days)",
+    color = "Number\ninfected\ndetected"
+)+
+common_theme()
+
+
+# Number Sx-------------------------------------
+sims_n_sx <- readRDS(here::here("dev", "intervention-effectiveness-n-symptomatic-low.rds"))
+
+fig_sx_detected <- sims_n_sx |>
+ggplot(aes(delay, avoided_infection, color = factor(n_symptomatic)))+
+geom_line() +
+labs(
+    x = "Delay of intervention (days)",
+    color = "Number\nsymptomatic\ndetected"
+)+
+common_theme()
+```
+
+
+```{r echo=FALSE}
+#| label: fig-simresults
+
+p_top <- fig_n_detected +  fig_sx_detected + fig_milk_detected + plot_layout(axis_titles = "collect")
+
+```
+
+# Figure 2 D-F
+
+```{r}
+ 
+sims_n_effective <- readRDS(here::here("dev", "time-to-effective-strategy-sim_n_detected-low.rds"))
+
+sims_sx_effective <- readRDS(here::here("dev", "time-to-effective-strategy-sim_prop_sx_detected-low.rds"))
+
+sims_milk_effective <- readRDS(here::here("dev", "time-to-effective-strategy-sim_production_detected-low.rds"))
+
+```
+
+## Assembly of Figure 2
+
+```{r}
+
+mybreaks <- seq(1,11,1)
+use_length <- length(mybreaks)
+
+mycolors<- function(x) {
+   colors<-viridis::viridis_pal()( use_length )
+   colors[1:x]
+}
+#Function to create labels for legend
+grandmin <- min(sims_n_effective$delay,sims_n_sx$delay)-1
+grandmax <- max(sims_n_effective$delay,sims_n_sx$delay)
+
+breaklabel <- function(x){
+   labels<- paste0(mybreaks[1:(use_length-1)], "-", mybreaks[2:use_length])
+   labels[1:x]
+}
+
+generate_time_to_effective <- function(x, ...) {
+  list(geom_contour_filled(breaks= mybreaks, show.legend = TRUE),
+  scale_fill_manual(values = mycolors(use_length), labels=breaklabel(use_length), name="Delay (days)", drop=FALSE) ,
+  # geom_contour(breaks = c(1,2,3,4,5,6,7,8,9,10), aes(z = delay), color = "red", lty = 2, lwd = 1.2),
+  scale_y_continuous(limits = c(4, 24),
+                     name = "New time from infection to isolation (hrs)",
+                     breaks = seq(4,24,4), expand = c(0,0)),
+   theme_classic(),
+  #theme(#legend.position.inside = c(.7,.8)),
+  theme(panel.background = element_rect(fill = "grey80")),
+     theme(legend.title = element_text(size = rel(1.1)),
+     legend.text = element_text(size  = rel(1.1)))
+  #   guides(fill=guide_legend(position = "inside"))
+   )
+}
+
+p1 <- sims_n_effective |>
+  filter(avoided_infection >= .8) |>
+  filter(identifcation_quarantine <= 20) |>
+  ggplot(aes(n_detected, identifcation_quarantine, z = delay))+
+  generate_time_to_effective()+
+  guides(fill = guide_legend(nrow = 1))+
+  theme(legend.position  = "bottom")+
+  scale_x_continuous(name = "Number of infected at detection", limits = c(1,NA), expand = c(0,0), breaks = c(1, seq(5,30,5)))
+
+colorz <- ggpubr::get_legend(p1)
+
+p1 <- p1 + theme(legend.position = "none")
+
+p2 <- sims_milk_effective |>
+  filter(avoided_infection >= .8) |>
+  filter(identifcation_quarantine <= 20) |>
+  ggplot(aes(prop_production_drop, identifcation_quarantine, z = delay))+
+  generate_time_to_effective()+
+  theme(legend.position  = "none")+
+  scale_x_continuous(name = "Milk production drop at detection", limits = c(.001,.04), expand = c(0,0))
+
+p3 <- sims_sx_effective |>
+  filter(avoided_infection >= .8) |>
+  filter(identifcation_quarantine <= 20) |>
+  ggplot(aes(prop_symptomatic*500, identifcation_quarantine, z = delay))+
+  generate_time_to_effective()+
+  theme(legend.position  = "none")+
+  scale_x_continuous(name = "Number of symptomatic at detection", limits = c(1,25), expand = c(0,0))
+  
+
+lower_panel2 <- p1 + p3 + p2 +plot_layout(axes = "collect")+ plot_annotation(tag_levels = "A")
+
+fig_2 <- p_top/lower_panel2 + plot_annotation(tag_levels = "A")  
+fig_2_use <- fig_2 + colorz + plot_layout(height = c(.47, .47, .03))
+
+
+cowplot::ggsave2(fig_2_use, filename = here::here("manuscript", "figures", "pnas-figure-2.pdf"), height = 10, width = 8.5)
+
+```
