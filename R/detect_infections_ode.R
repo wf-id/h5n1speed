@@ -13,6 +13,7 @@
 #'    classes.
 #' @param n_infected a numeric indicating the number of actively infected
 #'    individuals before detection occurs.
+#' @param ... additional arguments (not used)
 #'
 #' @return a list object with the time points associated with the detection
 #'     approach

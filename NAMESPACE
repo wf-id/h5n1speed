@@ -3,6 +3,7 @@
 S3method(plot,rRsurveillace_deterministic)
 export(detect_infections_ode)
 export(format_det_ode_output)
+export(generate_outbreak_chart)
 export(make_asym_r0)
 export(r_to_gamma)
 export(run_det_ode)

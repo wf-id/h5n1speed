@@ -4,19 +4,12 @@
 \name{h5n1speed-package}
 \alias{h5n1speed}
 \alias{h5n1speed-package}
-\title{h5n1speed: Understanding the role of speed on containing outbreaks on dairy farms.}
+\title{h5n1speed: Understanding the role of speed and asymptomatic transmission on containing outbreaks on dairy farms}
 \description{
-What the package does (one paragraph).
-}
-\seealso{
-Useful links:
-\itemize{
-  \item \url{https://wf-id.github.io/h5n1speed/}
-}
-
+Functions and code used to support the analysis in "Time is of the essence: effectiveness of dairy farm control for H5N1 is limited by fast spread."
 }
 \author{
-\strong{Maintainer}: Michael DeWitt \email{medewitt@wakehealth.edu} (\href{https://orcid.org/0000-0001-8940-1967}{ORCID})
+\strong{Maintainer}: Anonymous Author \email{anonymous@example.com}
 
 }
 \keyword{internal}

@@ -28,6 +28,8 @@ classes.}
 
 \item{n_infected}{a numeric indicating the number of actively infected
 individuals before detection occurs.}
+
+\item{...}{additional arguments (not used)}
 }
 \value{
 a list object with the time points associated with the detection

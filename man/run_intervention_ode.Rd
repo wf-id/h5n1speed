@@ -27,11 +27,15 @@ run_intervention_ode(
 
 \item{gamma_post}{post-intervention gamma}
 
+\item{gamma_post_asymptomatic}{post-intervention gamma for asymptomatic}
+
 \item{sim_duration}{how long to run simulation}
 
 \item{kappa}{the symptomatc duration}
 
 \item{delay_time}{the time to delay an intervention}
+
+\item{p_asymptomatic}{the proportion of the transmission that is asymptomatic}
 
 \item{s_ini}{the initial size}
 

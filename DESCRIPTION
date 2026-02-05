@@ -1,9 +1,8 @@
 Package: h5n1speed
-Title: Understanding the role of speed on containing outbreaks on dairy farms.
+Title: Understanding the role of speed and asymptomatic transmission on containing outbreaks on dairy farms
 Version: 0.0.2
 Authors@R: 
-    person("Anonymous", "Author", , "anonymous@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "0000-0000-0000-0000"))
+    person("Anonymous", "Author", , "anonymous@example.com", role = c("aut", "cre"))
 Description: Functions and code used to support the analysis in "Time is of the essence: effectiveness of dairy farm control for H5N1 is limited by fast spread."
 License: MIT + file LICENSE
 Encoding: UTF-8
@@ -19,7 +18,10 @@ Imports:
     stringr,
     tibble,
     readr,
-    here
+    here,
+    cowplot,
+    lubridate,
+    tidyr
 Depends: 
     R (>= 4.1.0)
 LazyData: true

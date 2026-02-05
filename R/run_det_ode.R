@@ -1,7 +1,7 @@
 #' Run ODE
 #'
 #' Run ordinary differential equation model
-#' 
+#'
 #' @param init.inf integer, the number of initial infection
 #' @param herd.size integer, the size of the herd
 #' @param r0 positive number, the basic reproduction number
@@ -64,7 +64,6 @@ run_det_ode <- function(init.inf = 1,
                         p_asymptomatic = 0,
                         sigmoid_fun = FALSE,
                         add_milk = TRUE) {
-
   stopifnot(disease.induced.mortality >= 0 || disease.induced.mortality < 1)
 
   nonzero <- 0.000001
@@ -84,7 +83,8 @@ run_det_ode <- function(init.inf = 1,
   }
 
 
-  state <- c("S" = herd.size - init.inf, # Symptomatic compartment
+  state <- c(
+    "S" = herd.size - init.inf, # Symptomatic compartment
     "I" = init.inf, # Infectious compartment
     "A" = 0, # Asymptomatic compartment
     "B" = 0, # Symptomatic, but not infectious compartment
@@ -95,7 +95,7 @@ run_det_ode <- function(init.inf = 1,
     "Z" = 0, # Dummy compartment to count cows that were infected but died due to productive lifespan
     "M" = 0,
     "Infected" = 0 # Ever infected
-  )  # Milk compartment
+  ) # Milk compartment
 
   # Set time in units of days
   init.time <- 0
@@ -105,52 +105,58 @@ run_det_ode <- function(init.inf = 1,
 
   # For the time being, let's just look at the fixed values given in the report.
   # Cow parameters
-  R0est = r0 #1/(1 - HIT)
+  R0est <- r0 # 1/(1 - HIT)
 
 
-  parms <- c(beta = R0est / (fever.duration) / herd.size,
-             gamma = 1 / fever.duration,
-             alpha = 1 / (milk.loss.dur - fever.duration),
-             mu = (1 / cow.prod.lifespan) *
-               dplyr::if_else(include.prod.lifespan, 1, 0),
-             phi = disease.induced.mortality,
-             m = base.milk.prod,
-             p = 1 - sympt.milk.prod / base.milk.prod,
-             p_asymptomatic = p_asymptomatic,
-             c = prop.cull)
+  parms <- c(
+    beta = R0est / (fever.duration) / herd.size,
+    gamma = 1 / fever.duration,
+    alpha = 1 / (milk.loss.dur - fever.duration),
+    mu = (1 / cow.prod.lifespan) *
+      dplyr::if_else(include.prod.lifespan, 1, 0),
+    phi = disease.induced.mortality,
+    m = base.milk.prod,
+    p = 1 - sympt.milk.prod / base.milk.prod,
+    p_asymptomatic = p_asymptomatic,
+    c = prop.cull
+  )
 
 
   # Write the SIR model in absolute time
-  SIRMmod <- function (time_in, State, pars) {
+  SIRMmod <- function(time_in, State, pars) {
     with(as.list(c(State, pars)), {
       N <- sum(State) - M - C - D - Z - Infected
-      if(!sigmoid_fun) {
+      if (!sigmoid_fun) {
         gamma0 <- ifelse((!is.null(intervention_date) &&
-                            time_in > intervention_date),
-                         gamma * (1 + gamma_multiplier), gamma)
+          time_in > intervention_date),
+        gamma * (1 + gamma_multiplier), gamma
+        )
         beta0 <- ifelse((!is.null(intervention_date) &&
-                            time_in > intervention_date) &&
-                           time_in <= intervention_stop,
-                         beta * (1 + beta_multiplier), beta)
+          time_in > intervention_date) &&
+          time_in <= intervention_stop,
+        beta * (1 + beta_multiplier), beta
+        )
       } else {
         gamma0 <- ifelse(!is.null(intervention_date) &&
-                           time_in > intervention_date,
-                         gamma * (1 + sigmoid_fun(time_in, intervention_date) *
-                                    gamma_multiplier),
-                         gamma)
+          time_in > intervention_date,
+        gamma * (1 + sigmoid_fun(time_in, intervention_date) *
+          gamma_multiplier),
+        gamma
+        )
         beta0 <- ifelse(!is.null(intervention_date) &&
-                           time_in > intervention_date &&
-                           time_in <= intervention_stop,
-                         beta * (1 + sigmoid_fun(time_in, intervention_date) *
-                                    beta_multiplier),
-                         beta)
+          time_in > intervention_date &&
+          time_in <= intervention_stop,
+        beta * (1 + sigmoid_fun(time_in, intervention_date) *
+          beta_multiplier),
+        beta
+        )
       }
 
-      dS <- -beta0 * S * (I + A ) + N * mu - S * mu
+      dS <- -beta0 * S * (I + A) + N * mu - S * mu
       dI <- beta0 * S * (I + A) * (1 - p_asymptomatic) - gamma0 * I - I * mu
       dA <- beta0 * S * (I + A) * p_asymptomatic - gamma0 * A - A * mu
       dB <- (gamma0 * I) * (1 - phi) - alpha * B - mu * B
-      dR <-  (1 - c) * alpha * B - mu * R
+      dR <- (1 - c) * alpha * B - mu * R
       dRa <- gamma0 * A - mu * A
       dC <- alpha * c * B
       dD <- gamma0 * I * phi
@@ -162,13 +168,16 @@ run_det_ode <- function(init.inf = 1,
   }
 
   out <- deSolve::ode(state, time, SIRMmod, parms,
-                      rtol = 1e-15, maxsteps = 500000)
+    rtol = 1e-15, maxsteps = 500000
+  )
 
   out <- as.data.frame(out)
 
   if (add_milk) {
-    out$milk_production <- with(out,
-                                (S + I + A + Ra) * base.milk.prod + sympt.milk.prod * B + R * recovered.milk.prod)
+    out$milk_production <- with(
+      out,
+      (S + I + A + Ra) * base.milk.prod + sympt.milk.prod * B + R * recovered.milk.prod
+    )
   }
 
   return(out)
@@ -176,18 +185,18 @@ run_det_ode <- function(init.inf = 1,
 
 
 #' Format deterministic output
-#' 
+#'
 #' @param dat a dataset generate from the function
 #' @param states a vector representing the states used in the compartmental model
 #' @return a data.frame formatted with the appropriate column names
-#' 
-#' @export 
+#'
+#' @export
 format_det_ode_output <- function(dat, states = compartment_defn$state) {
   x <- data.frame(dat)
   if (ncol(x) == 1L + length(states)) {
     colnames(x) <- c("time", states, "Infected")
   } else {
-    colnames(x) <- c("time", states, "Infected", "milk_production") 
+    colnames(x) <- c("time", states, "Infected", "milk_production")
   }
 
   class(x) <- c("rRsurveillace_deterministic", "data.frame")
@@ -195,7 +204,7 @@ format_det_ode_output <- function(dat, states = compartment_defn$state) {
 }
 
 #' Ploting function
-#' 
+#'
 #' @param x an object
 #' @param ... other parameters
 #' @importFrom ggplot2 ggplot aes geom_line autoplot
@@ -204,16 +213,15 @@ format_det_ode_output <- function(dat, states = compartment_defn$state) {
 
 plot.rRsurveillace_deterministic <- function(x, ...) {
   x |>
-  ggplot2::ggplot(ggplot2::aes(time, Infected)) +
-  ggplot2::geom_line() +
-  ggsci::scale_color_nejm() +
-  ggsci::scale_fill_nejm() +
-  ggplot2::theme_bw()+
-  ggplot2::labs(
-    y = "Cumulative Infected (number)",
-    x = "Time"
-  )
-
+    ggplot2::ggplot(ggplot2::aes(time, Infected)) +
+    ggplot2::geom_line() +
+    ggsci::scale_color_nejm() +
+    ggsci::scale_fill_nejm() +
+    ggplot2::theme_bw() +
+    ggplot2::labs(
+      y = "Cumulative Infected (number)",
+      x = "Time"
+    )
 }
 
 #' Sigmoid function
@@ -230,4 +238,3 @@ plot.rRsurveillace_deterministic <- function(x, ...) {
 sigmoid_fun <- function(x, x0 = 4, k = 2) {
   1 / (1 + exp(-k * (x - x0)))
 }
-
