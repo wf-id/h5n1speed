@@ -90,6 +90,8 @@ $$\text{Milk} = 100*(S + I) + 75*B + 80*R$$
   : Detect Infection from ODE Solution
 - [`format_det_ode_output()`](https://wf-id.github.io/h5n1speed/reference/format_det_ode_output.md)
   : Format deterministic output
+- [`generate_outbreak_chart()`](https://wf-id.github.io/h5n1speed/reference/generate_outbreak_chart.md)
+  : Generate the outbreak chart
 - [`make_asym_r0()`](https://wf-id.github.io/h5n1speed/reference/make_asym_r0.md)
   : Create R0 for asymptomatic infections
 - [`plot(`*`<rRsurveillace_deterministic>`*`)`](https://wf-id.github.io/h5n1speed/reference/plot.rRsurveillace_deterministic.md)

@@ -38,6 +38,10 @@ run_intervention_ode(
 
   post-intervention gamma
 
+- gamma_post_asymptomatic:
+
+  post-intervention gamma for asymptomatic
+
 - sim_duration:
 
   how long to run simulation
@@ -49,6 +53,10 @@ run_intervention_ode(
 - delay_time:
 
   the time to delay an intervention
+
+- p_asymptomatic:
+
+  the proportion of the transmission that is asymptomatic
 
 - s_ini:
 

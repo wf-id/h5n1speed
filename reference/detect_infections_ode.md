@@ -42,6 +42,10 @@ detect_infections_ode(
   a numeric indicating the number of actively infected individuals
   before detection occurs.
 
+- ...:
+
+  additional arguments (not used)
+
 ## Value
 
 a list object with the time points associated with the detection
