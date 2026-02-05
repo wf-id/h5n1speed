@@ -1,3 +1,13 @@
+#' Generate the outbreak chart
+#'
+#' This function generates the outbreak chart from the data-raw/2025-11-21-h5n1-dairy.csv file.
+#'
+#' @param data The path to the data file.
+#'
+#' @return A ggplot object.
+#' @export
+#'
+
 generate_outbreak_chart <- function(data = here::here("data-raw", "2025-11-21-h5n1-dairy.csv")) {
   data <- readr::read_csv(data)
   use_dat <- data |>
@@ -25,5 +35,4 @@ generate_outbreak_chart <- function(data = here::here("data-raw", "2025-11-21-h5
     theme(axis.text.y = element_text(size = rel(1.5)))
   cowplot::ggsave2(filename = here::here("manuscript", "figures", "outbreak.pdf"), fig, height = 10, width = 10)
 }
-generate_outbreak_chart()
-tail(use_dat)
+# generate_outbreak_chart()
