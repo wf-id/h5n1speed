@@ -23,28 +23,34 @@ remotes::install_github("wf-id/h5n1speed")
 
 ## Running the analysis
 
-The primary analysis scripts are available as: -
-**R/generate_outbreak_chart.R** contains the code used to generate
-Figure 1, a figure of the ongoing H5N1 outbreak (available in
-`manuscript/figures/outbreak.pdf`) - **manuscript/delay_strategy.qmd**
-contains the code to generate Figure 2, panel A and assembles the
-figures to make Figure 2. - **manuscript/intervention-effectiveness.R**
-contains the code to generate the figures shown in Figure 3 panels A-C
-which shows the effectiveness of each surveillance strategy and
-detection threshold at prevent infections. -
-**manuscript/time-to-effective-strategy.R** contains the code to
-generate the time required to realize an effective strategy. These
-values are used to generate Figure 3 panels D-F. -
-**dev/test-asymptomatic.R** contains the code to explore the role of
-asymptomatic transmission on detection and prevention of an outbreak and
-generates data for Figure 4A - **dev/asymptomatic-test.R** contains the
-code to explore the contribution of asymptomatic transmission and delay
-in terms of relative risk and also generated the complted Figure 4 with
-panels B-C. - **dev/conceptual.R** contains the code to generate the
-outputs used to make the conceptual figures shown in Figure 5. -
-Supplmental analysis: - **dev/test-mortality.R** contains the code to
-explore the role of disease induced mortality on detection and
-prevention of an outbreak.
+The primary analysis scripts are available as:
+
+- **R/generate_outbreak_chart.R** contains the code used to generate
+  Figure 1, a figure of the ongoing H5N1 outbreak (available in
+  `manuscript/figures/outbreak.pdf`)
+- **manuscript/delay_strategy.qmd** contains the code to generate Figure
+  2, panel A and assembles the figures to make Figure 2.
+- **manuscript/intervention-effectiveness.R** contains the code to
+  generate the figures shown in Figure 3 panels A-C which shows the
+  effectiveness of each surveillance strategy and detection threshold at
+  prevent infections.
+- **manuscript/time-to-effective-strategy.R** contains the code to
+  generate the time required to realize an effective strategy. These
+  values are used to generate Figure 3 panels D-F.
+- **dev/test-asymptomatic.R** contains the code to explore the role of
+  asymptomatic transmission on detection and prevention of an outbreak
+  and generates data for Figure 4A
+- **dev/asymptomatic-test.R** contains the code to explore the
+  contribution of asymptomatic transmission and delay in terms of
+  relative risk and also generated the complted Figure 4 with panels
+  B-C.
+- **dev/conceptual.R** contains the code to generate the outputs used to
+  make the conceptual figures shown in Figure 5.
+
+Supplmental analysis:
+
+- **dev/test-mortality.R** contains the code to explore the role of
+  disease induced mortality on detection and prevention of an outbreak.
 
 Please note that the R scripts were run across 38 threads on a single
 node of the Wake Forest University HPC which took ~5-6hrs. Running these
