@@ -37,8 +37,10 @@ run_intervention_ode <- function(
     r_ini = 0,
     phi = 0,
     ...) {
+  herd_size <- s_ini + i_ini + r_ini
   sim_base <- run_det_ode(
     r0 = r0_in,
+    herd.size = herd_size,
     p_asymptomatic = p_asymptomatic,
     fever.duration = 1 / gamma_in,
     sim.length = 365,
