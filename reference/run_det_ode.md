@@ -26,7 +26,8 @@ run_det_ode(
   intervention_stop = sim.length,
   p_asymptomatic = 0,
   sigmoid_fun = FALSE,
-  add_milk = TRUE
+  add_milk = TRUE,
+  transmission.type = "density"
 )
 ```
 
@@ -127,3 +128,8 @@ run_det_ode(
 - add_milk:
 
   a logical, if true milk production will be added to the simulation.
+
+- transmission.type:
+
+  a string, one of "frequency" for frequency-dependent or "density" for
+  density-dependent transmission modality. Default of "density."

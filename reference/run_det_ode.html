@@ -58,7 +58,8 @@
 <span>  intervention_stop <span class="op">=</span> <span class="va">sim.length</span>,</span>
 <span>  p_asymptomatic <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  sigmoid_fun <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  add_milk <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  add_milk <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  transmission.type <span class="op">=</span> <span class="st">"density"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -165,6 +166,12 @@ phase in the gamma mulipltier based on the intervention date.</p></dd>
 <dt id="arg-add-milk">add_milk<a class="anchor" aria-label="anchor" href="#arg-add-milk"></a></dt>
 <dd><p>a logical, if true milk production will be added to the
 simulation.</p></dd>
+
+
+<dt id="arg-transmission-type">transmission.type<a class="anchor" aria-label="anchor" href="#arg-transmission-type"></a></dt>
+<dd><p>a string, one of "frequency" for frequency-dependent
+or "density" for density-dependent transmission modality. Default of
+"density."</p></dd>
 
 </dl></div>
 

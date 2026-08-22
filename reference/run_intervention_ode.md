@@ -20,6 +20,8 @@ run_intervention_ode(
   i_ini = 1,
   r_ini = 0,
   phi = 0,
+  mode = "density",
+  reference_size = 500,
   ...
 )
 ```
@@ -73,6 +75,14 @@ run_intervention_ode(
 - phi:
 
   the proportion of the population that dies from the disease
+
+- mode:
+
+  the transmission modality one of "density" or "frequency"
+
+- reference_size:
+
+  the reference herd size at which density-mode realized R0 equals r0_in
 
 - ...:
 
