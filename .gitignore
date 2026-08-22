@@ -5,3 +5,8 @@ docs
 flu.R
 agai.R
 justfile2
+TODO.md
+Rplots.pdf
+*tar.gz
+*.rds
+manuscript/reviewer-comments/*

@@ -14,7 +14,7 @@ library(h5n1speed)
 library(here)
 library(future)
 library(furrr)
-
+install.packages("/deac/bio/kortessisGrp/dewime23/rRSurveillance/h5n1speed_0.0.3.tar.gz", repos = NULL, type = "source", lib = "/deac/bio/kortessisGrp/dewime23/libs")
 remotes::install_github("medewitt/nccovid")
 
 Sys.setenv(R_MAX_VSIZE = "100Gb")
