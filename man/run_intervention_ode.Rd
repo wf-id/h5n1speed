@@ -17,6 +17,8 @@ run_intervention_ode(
   i_ini = 1,
   r_ini = 0,
   phi = 0,
+  mode = "density",
+  reference_size = 500,
   ...
 )
 }
@@ -44,6 +46,10 @@ run_intervention_ode(
 \item{r_ini}{the initial recovered}
 
 \item{phi}{the proportion of the population that dies from the disease}
+
+\item{mode}{the transmission modality one of "density" or "frequency"}
+
+\item{reference_size}{the reference herd size at which density-mode realized R0 equals r0_in}
 
 \item{...}{
   Arguments passed on to \code{\link[=detect_infections_ode]{detect_infections_ode}}
