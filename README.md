@@ -4,6 +4,7 @@
 # Time is of the essence: effectiveness of dairy farm control strategies for H5N1 are limited by fast spread
 
 <!-- badges: start -->
+
 <!-- badges: end -->
 
 This repository hosts the code, data and supporting analysis for “Time
@@ -51,6 +52,23 @@ Supplmental analysis:
 
 - **dev/test-mortality.R** contains the code to explore the role of
   disease induced mortality on detection and prevention of an outbreak.
+- **dev/sensitivity-r0.R** contains the code to explore role of
+  different farm sizes under frequency depedent transmission.
+- **dev/sensitivity-tau-graphs.R** contains to code to generate the
+  sensitivity analysis for tau, the maximum allowable delay.
+- **dev/sensitivity-analysis.R** contains the code to explore the
+  sensitivity of our findings to a range of N, r, R0 thresholds.
+- **dev/conceptual-sensitivity-analysis-2.tex** tex code to generate the
+  conceptual figure for the relationship between R0 and r via changing
+  components of beta and gamma supporting panel A in Figure 2 of the
+  supplement. Uses points solved from
+  dev/conceptual-sensitivity-analysis-curves.R (i.e., vertices and
+  interior point).
+- **dev/conceptual-sensitivity-analysis-curves.R** code used to generate
+  the curves demonstrating the cummulative number of infections under
+  differing conceptual compositions of R0 (i.e., fixed beta, fixed
+  gamma, feasible interior space where beta and gamma change),
+  supporting supplemental Figure 2, panel B.
 
 Please note that the R scripts were run across 38 threads on a single
 node of the Wake Forest University HPC which took ~5-6hrs. Running these
@@ -80,17 +98,17 @@ intervention strategies.
 
 As a reminder, the ODE is shown below:
 
-$$
+``` math
 \begin{align}
   \frac{dS}{dt} &= - \beta S I/N \\
   \frac{dI}{dt} &= \beta S I/N - \gamma I \\
   \frac{dB}{dt} &= \gamma I - \kappa B \\
   \frac{dR}{dt} &= \kappa B \\
 \end{align}
-$$
+```
 
 Milk production is calculated as follows:
 
-$$
+``` math
 \text{Milk} = 100 * (S + I) + 75 * B + 80 * R 
-$$
+```
