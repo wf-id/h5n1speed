@@ -8,11 +8,11 @@
 
 Author A (2026). *h5n1speed: Understanding the role of speed and
 asymptomatic transmission on containing outbreaks on dairy farms*. R
-package version 0.0.2.
+package version 0.0.3.
 
     @Manual{,
       title = {h5n1speed: Understanding the role of speed and asymptomatic transmission on containing outbreaks on dairy farms},
       author = {Anonymous Author},
       year = {2026},
-      note = {R package version 0.0.2},
+      note = {R package version 0.0.3},
     }

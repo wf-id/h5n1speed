@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Understanding the role of speed and asymptomatic transmission on containing outbreaks on dairy farms • h5n1speed</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Understanding the role of speed and asymptomatic transmission on containing outbreaks on dairy farms">
 <meta name="description" content='Functions and code used to support the analysis in "Time is of the essence: effectiveness of dairy farm control for H5N1 is limited by fast spread."'>
@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">h5n1speed</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,6 +82,16 @@
 <ul>
 <li>
 <strong>dev/test-mortality.R</strong> contains the code to explore the role of disease induced mortality on detection and prevention of an outbreak.</li>
+<li>
+<strong>dev/sensitivity-r0.R</strong> contains the code to explore role of different farm sizes under frequency depedent transmission.</li>
+<li>
+<strong>dev/sensitivity-tau-graphs.R</strong> contains to code to generate the sensitivity analysis for tau, the maximum allowable delay.</li>
+<li>
+<strong>dev/sensitivity-analysis.R</strong> contains the code to explore the sensitivity of our findings to a range of N, r, R0 thresholds.</li>
+<li>
+<strong>dev/conceptual-sensitivity-analysis-2.tex</strong> tex code to generate the conceptual figure for the relationship between R0 and r via changing components of beta and gamma supporting panel A in Figure 2 of the supplement. Uses points solved from dev/conceptual-sensitivity-analysis-curves.R (i.e., vertices and interior point).</li>
+<li>
+<strong>dev/conceptual-sensitivity-analysis-curves.R</strong> code used to generate the curves demonstrating the cummulative number of infections under differing conceptual compositions of R0 (i.e., fixed beta, fixed gamma, feasible interior space where beta and gamma change), supporting supplemental Figure 2, panel B.</li>
 </ul>
 <p>Please note that the R scripts were run across 38 threads on a single node of the Wake Forest University HPC which took ~5-6hrs. Running these scripts on a single machine may take a significantly long time.</p>
 </div>
@@ -102,18 +112,14 @@
 <h2 id="ode-system">ODE System<a class="anchor" aria-label="anchor" href="#ode-system"></a>
 </h2>
 <p>As a reminder, the ODE is shown below:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><mfrac><mrow><mi>d</mi><mi>S</mi></mrow><mrow><mi>d</mi><mi>t</mi></mrow></mfrac></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mo>−</mo><mi>β</mi><mi>S</mi><mi>I</mi><mi>/</mi><mi>N</mi></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><mfrac><mrow><mi>d</mi><mi>I</mi></mrow><mrow><mi>d</mi><mi>t</mi></mrow></mfrac></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mi>β</mi><mi>S</mi><mi>I</mi><mi>/</mi><mi>N</mi><mo>−</mo><mi>γ</mi><mi>I</mi></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><mfrac><mrow><mi>d</mi><mi>B</mi></mrow><mrow><mi>d</mi><mi>t</mi></mrow></mfrac></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mi>γ</mi><mi>I</mi><mo>−</mo><mi>κ</mi><mi>B</mi></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><mfrac><mrow><mi>d</mi><mi>R</mi></mrow><mrow><mi>d</mi><mi>t</mi></mrow></mfrac></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mi>κ</mi><mi>B</mi></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd></mtr></mtable><annotation encoding="application/x-tex">
-\begin{align}
+<pre class="math"><code>\begin{align}
   \frac{dS}{dt} &amp;= - \beta S I/N \\
   \frac{dI}{dt} &amp;= \beta S I/N - \gamma I \\
   \frac{dB}{dt} &amp;= \gamma I - \kappa B \\
   \frac{dR}{dt} &amp;= \kappa B \\
-\end{align}
-</annotation></semantics></math></p>
+\end{align}</code></pre>
 <p>Milk production is calculated as follows:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">Milk</mtext><mo>=</mo><mn>100</mn><mo>*</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>S</mi><mo>+</mo><mi>I</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mn>75</mn><mo>*</mo><mi>B</mi><mo>+</mo><mn>80</mn><mo>*</mo><mi>R</mi></mrow><annotation encoding="application/x-tex">
-\text{Milk} = 100 * (S + I) + 75 * B + 80 * R
-</annotation></semantics></math></p>
+<pre class="math"><code>\text{Milk} = 100 * (S + I) + 75 * B + 80 * R </code></pre>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="license">
@@ -150,7 +156,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>
