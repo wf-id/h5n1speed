@@ -18,7 +18,6 @@
 #' @inheritDotParams detect_infections_ode
 #' @export
 
-
 run_intervention_all_ode <- function(
   r0_in = 1.20,
   gamma_in = 1 / 1.15,
@@ -29,7 +28,7 @@ run_intervention_all_ode <- function(
   delay_time = 7,
   p_asymptomatic = 0,
   s_ini = 500 - 1,
-  i_ini  = 1,
+  i_ini = 1,
   r_ini = 0,
   ...
 ) {
@@ -40,51 +39,70 @@ run_intervention_all_ode <- function(
 
   time_intervention <- intervention_approach$detection_day + delay_time
 
-  time_intervention <- ifelse(is.null(time_intervention),
-                              Inf, time_intervention)
+  time_intervention <- ifelse(
+    is.null(time_intervention),
+    Inf,
+    time_intervention
+  )
 
-  state <- c(S = s_ini, I = i_ini, A = 0, B= 0, R = r_ini)
-  params <- c(beta = r0_in * gamma_in, gamma1 = gamma_in, gamma2 = gamma_post, kappa = kappa)
-  time_in  <- seq(0, sim_duration, .1)
+  state <- c(S = s_ini, I = i_ini, A = 0, B = 0, R = r_ini)
+  params <- c(
+    beta = r0_in * gamma_in,
+    gamma1 = gamma_in,
+    gamma2 = gamma_post,
+    kappa = kappa
+  )
+  time_in <- seq(0, sim_duration, .1)
 
   simple_sir <- function(time_in, state, params) {
     with(as.list(c(state, params)), {
       gamma_use <- ifelse(time_in >= time_intervention, gamma2, gamma1)
-      gamma_use_asymptomatic <- ifelse(time_in >= time_intervention, gamma2_asymptomatic, gamma1)
+      gamma_use_asymptomatic <- ifelse(
+        time_in >= time_intervention,
+        gamma2_asymptomatic,
+        gamma1
+      )
       N <- sum(state)
       dS <- -beta * S * (I + A) / N
-      dI <- beta * S * (I + A) / N *(1 - p_asymptomatic) - gamma_use * I
+      dI <- beta * S * (I + A) / N * (1 - p_asymptomatic) - gamma_use * I
       dA <- beta * S * (I + A) / N * p_asymptomatic - gamma_use_asymptomatic * A
       dB <- gamma_use * I - kappa * B
-      dR <- kappa * B 
+      dR <- kappa * B
       dRa <- gamma_use_asymptomatic * A
 
-        return(list(c(dS, dI, dA, dB, dR, dRa)))
+      return(list(c(dS, dI, dA, dB, dR, dRa)))
     })
   }
-  out <- tryCatch(deSolve::ode(state, time_in, simple_sir,
-                               parms = params),
-                  error = function(e) {
-                    data.frame(time = NA_real_,
-                               S = NA_real_,
-                               I = NA_real_,
-                               A = NA_real_,
-                               B = NA_real_,
-                               R = NA_real_,
-                               Ra = NA_real_)
-                  })
+  out <- tryCatch(
+    deSolve::ode(state, time_in, simple_sir, parms = params),
+    error = function(e) {
+      data.frame(
+        time = NA_real_,
+        S = NA_real_,
+        I = NA_real_,
+        A = NA_real_,
+        B = NA_real_,
+        R = NA_real_,
+        Ra = NA_real_
+      )
+    }
+  )
 
   out <- as.data.frame(out) |>
     tibble::as_tibble()
 
-    base.milk.prod <- 100 # in units of lbs per day
-    sympt.milk.prod <- 100 - 25
-    recovered.milk.prod <- 80
+  base.milk.prod <- 100 # in units of lbs per day
+  sympt.milk.prod <- 100 - 25
+  recovered.milk.prod <- 80
 
-    out$total_infect_no_intervention <- intervention_approach$total_infect_no_intervention
-    out$milk_production <- with(out,
-                                (S + I + A + Ra) * base.milk.prod + sympt.milk.prod * B + R * recovered.milk.prod)
+  out$total_infect_no_intervention <- intervention_approach$total_infect_no_intervention
+  out$milk_production <- with(
+    out,
+    (S + I + A + Ra) *
+      base.milk.prod +
+      sympt.milk.prod * B +
+      R * recovered.milk.prod
+  )
 
   return(out)
-
 }

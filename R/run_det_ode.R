@@ -40,30 +40,36 @@
 #'     phase in the gamma mulipltier based on the intervention date.
 #' @param add_milk a logical, if true milk production will be added to the
 #'     simulation.
+#' @param transmission.type a string, one of "frequency" for frequency-dependent
+#'     or "density" for density-dependent transmission modality. Default of
+#'     "density."
 #'
 #' @importFrom deSolve ode
 #' @export
-run_det_ode <- function(init.inf = 1,
-                        herd.size = 500,
-                        r0 = 1.20,
-                        fever.duration = 1.15,
-                        milk.loss.dur = 7,
-                        cow.prod.lifespan = 365.25 * 2, # 2 years
-                        include.prod.lifespan = FALSE,
-                        base.milk.prod = 100, # in units of lbs per day
-                        sympt.milk.prod = 100 - 25,
-                        recovered.milk.prod = 80,
-                        discard.sick.prod = FALSE,
-                        disease.induced.mortality = 0,
-                        prop.cull = 0.0,
-                        sim.length = 365,
-                        gamma_multiplier = 0,
-                        beta_multiplier = 0,
-                        intervention_date = NULL,
-                        intervention_stop = sim.length,
-                        p_asymptomatic = 0,
-                        sigmoid_fun = FALSE,
-                        add_milk = TRUE) {
+run_det_ode <- function(
+  init.inf = 1,
+  herd.size = 500,
+  r0 = 1.20,
+  fever.duration = 1.15,
+  milk.loss.dur = 7,
+  cow.prod.lifespan = 365.25 * 2, # 2 years
+  include.prod.lifespan = FALSE,
+  base.milk.prod = 100, # in units of lbs per day
+  sympt.milk.prod = 100 - 25,
+  recovered.milk.prod = 80,
+  discard.sick.prod = FALSE,
+  disease.induced.mortality = 0,
+  prop.cull = 0.0,
+  sim.length = 365,
+  gamma_multiplier = 0,
+  beta_multiplier = 0,
+  intervention_date = NULL,
+  intervention_stop = sim.length,
+  p_asymptomatic = 0,
+  sigmoid_fun = FALSE,
+  add_milk = TRUE,
+  transmission.type = "density"
+) {
   stopifnot(disease.induced.mortality >= 0 || disease.induced.mortality < 1)
 
   nonzero <- 0.000001
@@ -74,14 +80,18 @@ run_det_ode <- function(init.inf = 1,
   fever.duration <- to_nonzero(fever.duration)
   milk.loss.dur <- to_nonzero(milk.loss.dur)
 
-  if (milk.loss.dur == fever.duration) milk.loss.dur <- milk.loss.dur + nonzero
-  if (milk.loss.dur < fever.duration) stop("Milk loss duration must be longer than fever duration")
-
+  if (milk.loss.dur == fever.duration) {
+    milk.loss.dur <- milk.loss.dur + nonzero
+  }
+  if (milk.loss.dur < fever.duration) {
+    stop("Milk loss duration must be longer than fever duration")
+  }
 
   if (discard.sick.prod) {
     sympt.milk.prod <- 0
   }
 
+  trans_modality <- match.arg(transmission.type, c("density", "frequency"))
 
   state <- c(
     "S" = herd.size - init.inf, # Symptomatic compartment
@@ -107,9 +117,8 @@ run_det_ode <- function(init.inf = 1,
   # Cow parameters
   R0est <- r0 # 1/(1 - HIT)
 
-
   parms <- c(
-    beta = R0est / (fever.duration) / herd.size,
+    beta = R0est / (fever.duration),
     gamma = 1 / fever.duration,
     alpha = 1 / (milk.loss.dur - fever.duration),
     mu = (1 / cow.prod.lifespan) *
@@ -121,40 +130,54 @@ run_det_ode <- function(init.inf = 1,
     c = prop.cull
   )
 
-
   # Write the SIR model in absolute time
   SIRMmod <- function(time_in, State, pars) {
     with(as.list(c(State, pars)), {
       N <- sum(State) - M - C - D - Z - Infected
       if (!sigmoid_fun) {
-        gamma0 <- ifelse((!is.null(intervention_date) &&
-          time_in > intervention_date),
-        gamma * (1 + gamma_multiplier), gamma
+        gamma0 <- ifelse(
+          (!is.null(intervention_date) &&
+            time_in > intervention_date),
+          gamma * (1 + gamma_multiplier),
+          gamma
         )
-        beta0 <- ifelse((!is.null(intervention_date) &&
-          time_in > intervention_date) &&
-          time_in <= intervention_stop,
-        beta * (1 + beta_multiplier), beta
+        beta0 <- ifelse(
+          (!is.null(intervention_date) &&
+            time_in > intervention_date) &&
+            time_in <= intervention_stop,
+          beta * (1 + beta_multiplier),
+          beta
         )
       } else {
-        gamma0 <- ifelse(!is.null(intervention_date) &&
-          time_in > intervention_date,
-        gamma * (1 + sigmoid_fun(time_in, intervention_date) *
-          gamma_multiplier),
-        gamma
+        gamma0 <- ifelse(
+          !is.null(intervention_date) &&
+            time_in > intervention_date,
+          gamma *
+            (1 +
+              sigmoid_fun(time_in, intervention_date) *
+                gamma_multiplier),
+          gamma
         )
-        beta0 <- ifelse(!is.null(intervention_date) &&
-          time_in > intervention_date &&
-          time_in <= intervention_stop,
-        beta * (1 + sigmoid_fun(time_in, intervention_date) *
-          beta_multiplier),
-        beta
+        beta0 <- ifelse(
+          !is.null(intervention_date) &&
+            time_in > intervention_date &&
+            time_in <= intervention_stop,
+          beta *
+            (1 +
+              sigmoid_fun(time_in, intervention_date) *
+                beta_multiplier),
+          beta
         )
       }
+      if (trans_modality == "density") {
+        foi <- S * (I + A) / 500
+      } else {
+        foi <- S * (I + A) / herd.size
+      }
 
-      dS <- -beta0 * S * (I + A) + N * mu - S * mu
-      dI <- beta0 * S * (I + A) * (1 - p_asymptomatic) - gamma0 * I - I * mu
-      dA <- beta0 * S * (I + A) * p_asymptomatic - gamma0 * A - A * mu
+      dS <- -beta0 * foi + N * mu - S * mu
+      dI <- beta0 * foi * (1 - p_asymptomatic) - gamma0 * I - I * mu
+      dA <- beta0 * foi * p_asymptomatic - gamma0 * A - A * mu
       dB <- (gamma0 * I) * (1 - phi) - alpha * B - mu * B
       dR <- (1 - c) * alpha * B - mu * R
       dRa <- gamma0 * A - mu * A
@@ -167,8 +190,13 @@ run_det_ode <- function(init.inf = 1,
     })
   }
 
-  out <- deSolve::ode(state, time, SIRMmod, parms,
-    rtol = 1e-15, maxsteps = 500000
+  out <- deSolve::ode(
+    state,
+    time,
+    SIRMmod,
+    parms,
+    rtol = 1e-15,
+    maxsteps = 500000
   )
 
   out <- as.data.frame(out)
@@ -176,7 +204,10 @@ run_det_ode <- function(init.inf = 1,
   if (add_milk) {
     out$milk_production <- with(
       out,
-      (S + I + A + Ra) * base.milk.prod + sympt.milk.prod * B + R * recovered.milk.prod
+      (S + I + A + Ra) *
+        base.milk.prod +
+        sympt.milk.prod * B +
+        R * recovered.milk.prod
     )
   }
 
